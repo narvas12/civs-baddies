@@ -1,0 +1,55 @@
+Product Model:
+
+Product: Represents the basic information about a product (e.g., name, description, price, quantity available).
+Category Model:
+
+Category: Represents product categories to help organize and filter products.
+User Profile Model:
+
+
+
+Order: Represents a customer's order, including details such as date, total price, and status.
+Order Item Model:
+
+OrderItem: Represents individual items within an order, including the product, quantity, and price at the time of purchase.
+Cart Model:
+
+Wishlist: Allows users to save products for future purchase.
+Shipping Model:
+
+Cart: Represents a shopping cart for each user, containing items they have added for future purchase.
+Address Model:
+==============================================
+
+
+Address: Stores user addresses for shipping and billing purposes.
+Payment Model:
+
+
+
+Payment: Represents payment details for orders, including payment method, transaction ID, and status.
+Coupon Model:
+
+
+
+Review: Allows users to leave reviews and ratings for products.
+Wishlist Model:
+
+
+Shipping: Represents shipping methods and costs.
+Notification Model:
+
+Notification: Stores notifications for users (e.g., order confirmation, shipping updates).
+
+
+
+================ User models ================
+
+UserProfile: Extends the default user model to store additional information about users (e.g., shipping address, order history).
+Order Model:
+
+
+
+I have a djago e-comerce project where i need to have a central admin who can manage eventries like the Dashboard where the metrics will be displayed along woth oders(pending, completed , cancled, and other nnecesary metrics ) and i need to allow the admin to add other admins
+
+the admin will have dashboard, orders, products, customers, reposts , abandoned carts, admin and settings pages and all tese pages will only be accessible to the admins 

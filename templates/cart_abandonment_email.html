@@ -1,0 +1,37 @@
+<!-- cart_abandonment_email.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Abandonment Reminder</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #333; margin-bottom: 20px;">Reminder: You have abandoned items in your cart</h2>
+        <p style="margin-bottom: 20px;">Please complete your purchase by visiting your cart.</p>
+        <h3>Abandoned Cart Items:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Product Image</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Name</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Price</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Discounted Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;"><img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="max-width: 100px; height: auto;"></td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.product.name }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${{ item.product.price }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${{ item.discounted_price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

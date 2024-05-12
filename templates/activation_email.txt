@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0; text-align: center;">
+    <div style="background-color: #ffffff; border-radius: 5px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 600px; margin: 20px auto;">
+        <p style="margin-bottom: 20px; font-size: 16px; line-height: 1.6;">Hi {{ user.full_name }},</p>
+        <p style="margin-bottom: 20px; font-size: 16px; line-height: 1.6;">Please click the following link to activate your account:</p>
+        <a href="{{ activation_link }}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px;">Activate Account</a>
+        <p style="margin-top: 20px; margin-bottom: 0; font-size: 14px;">Best regards,<br>Your Company Name</p>
+    </div>
+    <div style="text-align: center; color: rgb(94, 94, 94); margin-top: 2rem;">
+        <small>This email is automatically generated please do not reply</small>
+        <br><small>Copyright &copy; CIVS & BADDIES</small>
+    </div>
+</body>
+</html>

@@ -1,0 +1,262 @@
+import uuid
+from django.db import IntegrityError
+from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+from core import settings
+from users.utils import send_activation_email
+from .models import Address, CustomUser, CustomerProfile, AdminProfile
+from django_countries.serializers import CountryFieldMixin
+import cloudinary
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from django.core.validators import FileExtensionValidator
+from rest_framework.exceptions import AuthenticationFailed
+from django.contrib.auth import get_user_model, authenticate
+from django.core.validators import RegexValidator
+
+cloudinary.config( 
+    cloud_name = settings.CLOUDINARY_CLOUD_NAME, 
+    api_key = settings.CLOUDINARY_API_KEY, 
+    api_secret = settings.CLOUDINARY_API_SECRET
+)  
+
+
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        exclude = (
+            'is_superuser',
+            'is_active',
+            'activation_token',
+            'groups',
+            'user_permissions',
+            'password',
+            'last_login',
+        )
+
+class CreateUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(max_length=100, required=True)
+    email = serializers.EmailField(max_length=255, required=True)
+    mobile = serializers.CharField(max_length=11, required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['full_name', 'email', 'mobile', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'email': {'required': True, 'unique': True}, 
+            'mobile': {'required': True, 'unique': True}, 
+        }
+
+    def create(self, validated_data):
+        try:
+            full_name = validated_data.pop('full_name')
+            email = validated_data.pop('email')
+            mobile = validated_data.pop('mobile')
+            password = validated_data.pop('password')
+
+            validated_data['username'] = email
+            validated_data['is_active'] = False  # Set initial activation status to False
+
+            user = CustomUser.objects.create_user(
+                full_name=full_name, email=email, mobile=mobile, password=password, **validated_data
+            )
+
+            # Generate and set activation token
+            user.activation_token = str(uuid.uuid4())
+            user.save()
+
+            # Send activation email
+            send_activation_email(user)
+
+            return user
+        except IntegrityError as e:
+            if 'UNIQUE constraint failed: users_customuser.mobile' in str(e):
+                raise serializers.ValidationError({'mobile': 'This mobile number is already in use.'})
+            else:
+                raise serializers.ValidationError({'non_field_errors': 'Something went wrong.'})
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('full_name', 'mobile')  # Update only these fields
+        extra_kwargs = {'mobile': {'validators': [RegexValidator(regex=r"^\d{10,15}$", message="Enter a valid mobile number")]}}
+        read_only_fields = ('email',)  
+
+class UserMiniSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(source="profile.avatar")
+    gender = serializers.CharField(source="profile.gender")
+    email = serializers.EmailField(source="profile.gender")
+
+
+    class Meta:
+        model = get_user_model()
+        fields = ["username", "avatar", "gender", "email"]
+
+
+
+class CreateAdminSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(max_length=128, write_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'mobile', 'password', 'is_staff', 'is_superuser', 'is_active']
+        extra_kwargs = {
+            'username': {'required': True},
+            'mobile': {'required': True},
+            'is_staff':{'required': True},
+            'is_superuser':{'required': True},
+            'is_active':{'required': True}
+        }
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        is_staff = validated_data.pop('is_staff')
+        is_active = validated_data.pop('is_active')
+        is_superuser = validated_data.pop('is_superuser')
+
+        user = CustomUser.objects.create_user(is_staff=is_staff, is_active=is_active,is_superuser=is_superuser, **validated_data)
+        user.set_password(password)
+        user.save()
+
+        return user
+    
+
+        
+class LoginSerializer(serializers.ModelSerializer):
+    username = serializers.EmailField(max_length=155, min_length=6)
+    password = serializers.CharField(max_length=68, write_only=True)
+    full_name = serializers.CharField(max_length=255, read_only=True)
+    access_token = serializers.CharField(max_length=255, read_only=True)
+    refresh_token = serializers.CharField(max_length=255, read_only=True)
+    is_staff = serializers.BooleanField(read_only=True)  # Added field for staff status
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'password', 'full_name', 'access_token', 'refresh_token', 'is_staff']
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+        request = self.context.get('request')
+        user = authenticate(request, username=username, password=password)
+        if not user:
+            raise AuthenticationFailed("Invalid credentials. Please try again.")
+        
+        # Check if the user is staff
+        is_staff = user.is_staff
+
+        tokens = user.tokens()
+        return {
+            'username': user.username,
+            'full_name': user.get_full_name,
+            "access_token": str(tokens.get('access')),
+            "refresh_token": str(tokens.get('refresh')),
+            "is_staff": is_staff,  # Include staff status in the response
+        }
+        
+        
+        
+        
+class LogoutUserSerializer(serializers.Serializer):
+    refresh_token=serializers.CharField()
+
+    # default_error_message = {
+    #     'bad_token': ('Token is expired or invalid')
+    # }
+
+    def validate(self, attrs):
+        self.token = attrs.get('refresh_token')
+
+        return attrs
+
+    def save(self, **kwargs):
+        try:
+            token=RefreshToken(self.token)
+            token.blacklist()
+        except TokenError:
+            raise serializers.ValidationError("Token is Invalid")
+           # return self.fail("")
+           
+           
+class ChangePasswordSerializer(serializers.Serializer):
+    user_id = serializers.UUIDField(required=True)
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+class ResetPasswordEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
+
+
+    
+    
+class GetAllUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'customer_id', 'full_name', 'mobile', 'created_at', 'updated_at', 'is_staff', 'is_superuser']
+
+
+
+
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerProfile
+        fields = ['id', 'user', 'address']
+
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = Address
+        fields = '__all__'  # Include all fields
+
+    def validate(self, data):
+        return data
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = "__all__"
+
+class AdminProfileSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField(
+        max_length=None,
+        allow_empty_file=True,
+        use_url=True,
+        validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'jpeg'])],
+        required=False,
+    )
+
+    class Meta:
+        model = AdminProfile
+        fields = "__all__"
+
+    def create(self, validated_data):
+        avatar_file = validated_data.pop('avatar', None)
+        profile = super().create(validated_data)
+        if avatar_file:
+            # Upload the avatar to Cloudinary
+            upload_result = cloudinary.uploader.upload(avatar_file)
+            profile.avatar = upload_result['secure_url']
+            profile.save()
+        return profile
+
+    def update(self, instance, validated_data):
+        avatar_file = validated_data.pop('avatar', None)
+        instance = super().update(instance, validated_data)
+        if avatar_file:
+            # Upload the new avatar and potentially delete the old one (implement logic)
+            upload_result = cloudinary.uploader.upload(avatar_file)
+            instance.avatar = upload_result['secure_url']
+        else:
+            # If avatar is not provided, keep the existing one
+            instance.avatar = instance.avatar
+        instance.save()
+        return instance
+
+

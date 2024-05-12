@@ -1,0 +1,86 @@
+import random
+import string
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
+from orders.managers import OrderManager
+from products.models import Product
+from users.models import Address, CustomUser
+from users.models import Address, CustomUser
+
+
+class Order(models.Model):
+    PENDING = "P"
+    COMPLETED = "C"
+    SHIPPED = "S"
+    CANCELED = "X"
+
+    STATUS_CHOICES = (
+        (PENDING, _("pending")),
+        (COMPLETED, _("completed")),
+        (SHIPPED, _("shipped")),
+        (CANCELED, _("canceled")),
+    )
+
+    buyer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='orders')
+    order_number = models.CharField(max_length=250, blank=True, null=True)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
+    is_paid = models.BooleanField(default=False)
+    shipping_address = models.ForeignKey(Address, related_name="shipping_orders", on_delete=models.SET_NULL, null=True)
+    billing_address = models.ForeignKey(Address, related_name="billing_orders", on_delete=models.SET_NULL,  null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    objects = OrderManager()
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    @cached_property
+    def total_cost(self):
+        items = self.orderitems.all()
+
+        
+
+    def save(self, *args, **kwargs):
+
+        random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        random_part_formatted = f"{random_part[:4]}-{random_part[4:]}-{random_part[4:]}"
+
+
+        self.order_number = f"{self.buyer.customer_id}-{random_part_formatted}"
+        
+        super(Order, self).save(*args, **kwargs)
+    
+    @staticmethod
+    def create_order(buyer, address, is_paid=False):
+
+        order = Order()
+        order.buyer = buyer
+        order.shipping_address = address
+        order.is_paid = is_paid
+        order.save()
+        return order
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, related_name="orderitems", on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+
+    @cached_property
+    def get_cost(self):
+        return self.quantity * self.product.price
+    
+    @staticmethod
+    def create_order_item(order, product, quantity):
+        total = quantity * product.price  # Calculate total based on quantity and product price
+        order_item = OrderItem()
+        order_item.order = order
+        order_item.product = product
+        order_item.quantity = quantity
+        order_item.total = total  # Set the total
+        order_item.save()
+        return order_item

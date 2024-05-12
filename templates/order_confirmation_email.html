@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+
+    <div style="max-width: 600px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+        <h1 style="color: #333;">Order Confirmation</h1>
+        <p style="color: #555; font-size: 16px;">Hello {{ user.username }},</p>
+        <p style="color: #555; font-size: 16px;">Your order has been placed successfully.</p>
+        <p style="color: #555; font-size: 16px;">Order number: <br><strong>{{ order_number }}</strong></p>
+        
+        <h2 style="color: #333;">Order Details:</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Product Name</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Image</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ product.name }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;"><img src="{{ product.image_url }}" alt="{{ product.name }}" style="max-width: 100px;"></td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${{ product.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p style="color: #555; font-size: 16px;">Order total: <strong>${{ order_instance.total }}</strong></p>
+    </div>
+
+</body>
+</html>
