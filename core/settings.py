@@ -7,6 +7,11 @@ import django
 import environ
 import cloudinary_storage
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+import cloudinary_storage
+
 
 env = environ.Env(
     # set casting, default value
@@ -59,8 +64,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'django_rest_passwordreset',
-    'pypaystack',
-    'cloudinary'
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 
@@ -296,11 +301,22 @@ REST_KNOX ={
 
 
 # Cloudinary configuration
-CLOUDINARY_CLOUD_NAME=env("CLOUDINARY_CLOUD_NAME")
-CLOUDINARY_API_KEY=env("CLOUDINARY_API_KEY")
-CLOUDINARY_API_SECRET=env("CLOUDINARY_API_SECRET")
-
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dsmgwxyzi',
+    'API_KEY': '818626184762193',
+    'API_SECRET': 'vkvy1acRglD1laypnLQW2RCsBzs'
+}
+
+
+# CLOUDINARY_STORAGE = {
+#     'CLOUD_NAME': 'your_cloud_name',
+#     'API_KEY': os.environ.get('CLOUDINARY_API'),
+#     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET')
+# }
+
+
 
 
 # Number of minutes of inactivity before a user is marked offline
@@ -311,5 +327,5 @@ USER_ONLINE_TIMEOUT = 10
 USER_LASTSEEN_TIMEOUT = 60 * 60 * 24 * 7
 
 
-PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY')
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = env('PAYSTACK_PUBLIC_KEY')

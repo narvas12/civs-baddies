@@ -14,11 +14,11 @@ from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model, authenticate
 from django.core.validators import RegexValidator
 
-cloudinary.config( 
-    cloud_name = settings.CLOUDINARY_CLOUD_NAME, 
-    api_key = settings.CLOUDINARY_API_KEY, 
-    api_secret = settings.CLOUDINARY_API_SECRET
-)  
+cloudinary.config(
+            cloud_name=settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
+            api_key=settings.CLOUDINARY_STORAGE['API_KEY'],
+            api_secret=settings.CLOUDINARY_STORAGE['API_SECRET']
+        )
 
 
 

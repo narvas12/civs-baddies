@@ -84,3 +84,17 @@ class OrderItem(models.Model):
         order_item.total = total  # Set the total
         order_item.save()
         return order_item
+    
+
+
+class Transaction(models.Model):
+    order = models.ForeignKey(Order, related_name='transactions', on_delete=models.CASCADE)  # Link to the related Order
+    reference = models.CharField(max_length=255, unique=True)  # Unique transaction reference from Paystack
+    amount = models.DecimalField(max_digits=10, decimal_places=2)  # Amount paid in subunit of currency
+    status = models.CharField(max_length=255)  # Status received from Paystack (e.g., success, failed)
+    gateway = models.CharField(max_length=255, blank=True)  # Payment gateway used (e.g., paystack)
+    charged_at = models.DateTimeField(blank=True, null=True)  # Timestamp of when the payment was charged (optional)
+    message = models.TextField(blank=True)  # Optional message from Paystack
+
+    def __str__(self):
+        return f"Transaction for Order {self.order.order_number} (Ref: {self.reference})"

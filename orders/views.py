@@ -1,6 +1,7 @@
 import time
 import uuid
 from django.shortcuts import get_object_or_404, render
+import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,12 +9,11 @@ from rest_framework.permissions import IsAuthenticated
 from notifications.utils import send_order_confirmation_email
 from orders.managers import OrderManager
 from products.models import Product
-from .models import Order, OrderItem
-from .serializers import OrderSerializer, OrderItemSerializer, TrendingProductSerializer
+from .models import Order, OrderItem, Transaction
+from .serializers import OrderSerializer, OrderItemSerializer, PaymentSerializer, TrendingProductSerializer
 from users.models import Address
 from cart.models import CartItem
 from django.contrib.auth import get_user_model
-import pypaystack
 from core import settings
 
 
@@ -113,49 +113,97 @@ class OrderCreateAPIView(APIView):
 
 
 
-# Initialize Paystack with your secret key
-paystack_secret_key = settings.PAYSTACK_SECRET_KEY
-paystack_api = pypaystack.Transaction(settings.PAYSTACK_PUBLIC_KEY)
-
-
-class PaystackWebhook(APIView):
-    def post(self, request, *args, **kwargs):
-        event = request.data.get('event')
-        data = request.data.get('data')
-
-        # Verify the webhook event with Paystack
-        signature = request.headers.get('x-paystack-signature')
+class PaymentView(APIView):
+    def post(self, request, order_id):
         try:
-            paystack_api.webhook.verify(signature, data)
-        except pypaystack.exceptions.InvalidSignatureError:
-            return Response({'error': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)
+            order = Order.objects.get(pk=order_id)
+        except Order.DoesNotExist:
+            return Response({'error': 'Invalid order ID.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Process the event based on the event type
-        if event == 'charge.success':
-            # Payment successful, update order status
-            try:
-                # Retrieve order based on payment reference from Paystack data
-                payment_reference = data['reference']
-                order = Order.objects.get(payment_reference=payment_reference)
+        serializer = PaymentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        amount = serializer.validated_data['amount']
 
-                # Update order status to 'paid' or similar
+
+        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
+        # Construct Paystack API request payload
+        payload = {
+            'email': email,
+            'amount': amount,
+            'callback_url': 'https://your-domain.com/callback/' + str(order_id),  # Include order ID in callback URL
+            # ... other parameters (optional)
+        }
+
+        headers = {
+            'Authorization': f'Bearer {paystack_secret_key}',
+            'Content-Type': 'application/json',
+        }
+
+        try:
+            response = requests.post('https://api.paystack.co/transaction/initialize', json=payload, headers=headers)
+            response.raise_for_status()  # Raise an exception for non-2xx status codes
+
+            data = response.json()
+            authorization_url = data.get('authorization_url')
+
+            return Response({'authorization_url': authorization_url}, status=status.HTTP_200_OK)
+
+        except requests.exceptions.RequestException as e:
+            # Handle API call errors gracefully
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            # Handle unexpected errors
+            return Response({'error': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PaymentCallbackView(APIView):
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.get(pk=order_id)
+        except Order.DoesNotExist:
+            return Response({'error': 'Invalid order ID.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
+
+        # Retrieve reference from callback URL or request data (depending on your implementation)
+        reference = request.GET.get('reference') 
+
+        headers = {
+            'Authorization': f'Bearer {paystack_secret_key}',
+        }
+
+        try:
+            response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
+            response.raise_for_status()  # Raise an exception for non-2xx status codes
+
+            data = response.json()
+
+            if data['data']['status'] == 'success':
                 order.is_paid = True
                 order.save()
 
-                # Send notification or perform other actions (optional)
-                # ...
+                # Update or create transaction
+                transaction, created = Transaction.objects.get_or_create(
+                    order=order,
+                    reference=reference,
+                    defaults={
+                        'amount': data['data']['amount'] / 100,  # Assuming amount is returned in subunit of currency
+                        'status': data['data']['status'],
+                        'charged_at': data['data'].get('charged_at'),
+                        'message': data['data'].get('message'),
+                    }
+                )
 
-                return Response({'message': 'Payment successful and order updated'}, status=status.HTTP_200_OK)
-            except Order.DoesNotExist:
-                # Handle case where order not found (log or investigate)
-                return Response({'message': 'Order not found for reference'}, status=status.HTTP_400_BAD_REQUEST)
+        except requests.exceptions.RequestException as e:
+            # Handle API call errors gracefully
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        elif event == 'charge.failure':
-            # Payment failed, handle accordingly (optional)
-            # ...
-            return Response({'message': 'Payment failed'}, status=status.HTTP_200_OK)
-
-        return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Handle unexpected errors
+            return Response({'error': 'An unexpected error occured'},  status=status.HTTP_400_BAD_REQUEST)
 
 
 class TrendingProducts(APIView):

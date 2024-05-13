@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from .models import Product, ProductCategory, Variation
+from .models import Product, ProductCategory, Variation, get_default_product_category
 from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
-from django.utils.text import slugify
-
+from django.conf import settings
+import cloudinary
 from cloudinary.uploader import upload
 
 User = get_user_model()
@@ -43,13 +43,17 @@ class ProductSerializer(serializers.ModelSerializer):
         slug = self.generate_unique_slug(name, product_tag)
         validated_data['slug'] = slug
 
+        # Upload image to Cloudinary if present in request data
+        if 'image' in validated_data:
+            validated_data['image'] = self.upload_image(validated_data['image'])
+
         return super().create(validated_data)
 
     def generate_unique_slug(self, name, product_tag):
         import random
         import string
 
-        base_slug = slugify(name)
+        base_slug = name.lower().replace(' ', '-')
         random_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
         slug = f"{base_slug}-{product_tag}-{random_chars}"
         
@@ -60,6 +64,16 @@ class ProductSerializer(serializers.ModelSerializer):
             counter += 1
         
         return slug
+
+    def upload_image(self, image):
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
+            api_key=settings.CLOUDINARY_STORAGE['API_KEY'],
+            api_secret=settings.CLOUDINARY_STORAGE['API_SECRET']
+        )
+        # Upload image to Cloudinary
+        upload_result = upload(image, folder="product/images/")
+        return upload_result['secure_url']
 
 
 

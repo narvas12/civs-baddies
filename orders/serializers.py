@@ -21,6 +21,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['product', 'quantity', 'total']
 
 
+class PaymentSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
+
 
 class TrendingProductSerializer(serializers.Serializer):
     product_name = serializers.CharField(source='product__name')
