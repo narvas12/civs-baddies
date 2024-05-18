@@ -124,6 +124,27 @@ class CreateAdminSerializer(serializers.ModelSerializer):
         return user
     
 
+class AdminLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
+
+        if username and password:
+            user = authenticate(username=username, password=password)
+            if user:
+                if not user.is_active:
+                    raise serializers.ValidationError('User is disabled.')
+                if not user.is_staff:
+                    raise serializers.ValidationError('User is not an admin.')
+                return user
+            else:
+                raise serializers.ValidationError('Invalid credentials.')
+        else:
+            raise serializers.ValidationError('Must include "username" and "password".')
+
         
 class LoginSerializer(serializers.ModelSerializer):
     username = serializers.EmailField(max_length=155, min_length=6)

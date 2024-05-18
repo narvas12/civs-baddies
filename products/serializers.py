@@ -4,6 +4,8 @@ from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from django.conf import settings
 import cloudinary
+import random
+import string
 from cloudinary.uploader import upload
 
 User = get_user_model()
@@ -50,10 +52,12 @@ class ProductSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def generate_unique_slug(self, name, product_tag):
-        import random
-        import string
+        
 
-        base_slug = name.lower().replace(' ', '-')
+        # Remove single quotes from the product name
+        cleaned_name = name.replace("'", "")
+
+        base_slug = cleaned_name.lower().replace(' ', '-')
         random_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
         slug = f"{base_slug}-{product_tag}-{random_chars}"
         
@@ -77,16 +81,25 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 
+# class VariationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Variation
+#         fields = '__all__'
+
+#     def create(self, validated_data):
+#         return super().create(validated_data)
+
+#     def update(self, instance, validated_data):
+#         return super().update(instance, validated_data)
+    
+
+
 class VariationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Variation
         fields = '__all__'
 
-    def create(self, validated_data):
-        return super().create(validated_data)
 
-    def update(self, instance, validated_data):
-        return super().update(instance, validated_data)
 
 
 class ProductDeleteSerializer(serializers.Serializer):

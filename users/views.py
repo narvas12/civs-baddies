@@ -13,12 +13,14 @@ from django.contrib.auth import authenticate, update_session_auth_hash
 from rest_framework.permissions import IsAuthenticated
 from common.pagination import CustomPagination
 from rest_framework import viewsets
+from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import CustomUser, CustomerProfile, AdminProfile, Address
 from django.contrib.auth.hashers import make_password
-from users.permissions import IsUserProfileOwner
+from users.permissions import IsSuperUser, IsUserProfileOwner
 from django.db import IntegrityError
 from .serializers import (
     AddressSerializer,
+    AdminLoginSerializer,
     # BillingAddressSerializer,
     CreateAdminSerializer,
     ChangePasswordSerializer,
@@ -57,13 +59,15 @@ class BaseAPIView(APIView):
 
 
 class UserListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+
     serializer_class = GetAllUserSerializer
     pagination_class = CustomPagination
 
     def get_queryset(self):
         return CustomUser.objects.filter(is_staff=False)
 
-
+        
 
 class CreateUserAPIView(APIView):
     def post(self, request):
@@ -76,7 +80,7 @@ class CreateUserAPIView(APIView):
 
 
 class UserUpdateView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, user_id):
         user = get_object_or_404(CustomUser, id=user_id)
@@ -106,7 +110,6 @@ class ActivateUserAPIView(APIView):
         
 class UserLoginAPIView(GenericAPIView):
     serializer_class=LoginSerializer
-    # renderer_classes = (ApiCustomRenderer,)
     
     def post(self, request):
         serializer= self.serializer_class(data=request.data, context={'request': request})
@@ -157,6 +160,8 @@ class ChangePasswordAPIView(BaseAPIView):
 
 
 class CreateAdminAPIView(APIView):
+    # permission_classes = [IsSuperUser]
+    
     def post(self, request):
         serializer = CreateAdminSerializer(data=request.data)
         if serializer.is_valid():
@@ -166,8 +171,23 @@ class CreateAdminAPIView(APIView):
 
 
 
+class AdminLoginView(generics.GenericAPIView):
+    serializer_class = AdminLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
+    
+
 class AdminProfileDetail(generics.RetrieveUpdateAPIView):
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     queryset = AdminProfile.objects.all()
     serializer_class = AdminProfileSerializer
 
@@ -191,12 +211,15 @@ class AdminProfileDetail(generics.RetrieveUpdateAPIView):
             return Response({"message": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
     
 
+
 class AdminProfileList(generics.ListAPIView):
     queryset = AdminProfile.objects.all()
     serializer_class = AdminProfileSerializer
 
+
+
 class LockAdminUserAPIView(APIView):
-    # permission_classes =  [IsAuthenticated]
+    permission_classes = [IsSuperUser]
 
     def post(self, request, user_id):
         try:
@@ -210,19 +233,43 @@ class LockAdminUserAPIView(APIView):
 
 
 class UnlockAdminUserAPIView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsSuperUser]
 
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(id=user_id)
-            
             user.set_password('P@sword.123')  
             user.save()
 
-            
             return Response({'message': f'Admin user {user.username} unlocked successfully.'}, status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AdminUserList(generics.ListAPIView):
+    # permission_classes = [IsSuperUser]
+
+    serializer_class = GetAllUserSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return CustomUser.objects.filter(is_staff=True)
+
+    
+class DeactivateStaffUserAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            user = CustomUser.objects.get(pk=pk, is_staff=True)
+            user.is_active = False
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found or is not staff'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CustomerProfileAPIView(APIView):

@@ -44,7 +44,7 @@ class Product(models.Model):
         ordering = ("-created_at",)
 
     def __str__(self):
-        return self.name
+        return self.name if self.name else "Product (No Name)"
 
 
 class Variation(models.Model):

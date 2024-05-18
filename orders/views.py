@@ -102,7 +102,7 @@ class OrderCreateAPIView(APIView):
 
             # Prepare data for Paystack payment initiation (frontend use)
             payment_data = {
-                'amount': int(total_cost * 100),  # Convert to kobo for Paystack
+                'amount': int(total_cost),  # Convert to kobo for Paystack
                 'email': user.email,
                 'customer': user.get_full_name(),
                 'reference': order_data['payment_reference']
@@ -120,14 +120,14 @@ class PaymentView(APIView):
         except Order.DoesNotExist:
             return Response({'error': 'Invalid order ID.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = PaymentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data['email']
-        amount = serializer.validated_data['amount']
+        # Fetch user email from the related buyer
+        email = order.buyer.email
 
+        # Calculate the total amount payable by summing up the total cost of all order items
+        amount = sum(order_item.total for order_item in order.orderitems.all())
 
-        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
         # Construct Paystack API request payload
+        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
         payload = {
             'email': email,
             'amount': amount,
@@ -190,7 +190,7 @@ class PaymentCallbackView(APIView):
                     order=order,
                     reference=reference,
                     defaults={
-                        'amount': data['data']['amount'] / 100,  # Assuming amount is returned in subunit of currency
+                        'amount': data['data']['amount'],  # Assuming amount is returned in subunit of currency
                         'status': data['data']['status'],
                         'charged_at': data['data'].get('charged_at'),
                         'message': data['data'].get('message'),
@@ -204,6 +204,7 @@ class PaymentCallbackView(APIView):
         except Exception as e:
             # Handle unexpected errors
             return Response({'error': 'An unexpected error occured'},  status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class TrendingProducts(APIView):

@@ -3,6 +3,7 @@ from users.views import (
     ActivateUserAPIView,
     AddressCreateView,
     AddressUpdateView,
+    AdminLoginView,
     AdminProfileDetail,
     AdminProfileList,
     
@@ -22,19 +23,24 @@ from users.views import (
 
     CustomerProfileListAPIView, 
     DeleteAllProfilesAPIView,
-    UserUpdateView
-  
+    UserUpdateView,
+    
+    AdminUserList
 )
 
 urlpatterns = [
     path('register/', CreateUserAPIView.as_view() ),
     path('login/', UserLoginAPIView.as_view() ),
+
+    path('admin/login/', AdminLoginView.as_view(), name='admin-login'),
+    
     path('activate/<str:activation_token>/', ActivateUserAPIView.as_view() ),
     path('auth/logout', LogoutApiView.as_view(), name='logout'),
     path('change_password/', ChangePasswordAPIView.as_view() ),
     path('password_reset/', include('django_rest_passwordreset.urls' )),
 
     path('admin-profiles/', AdminProfileList.as_view() ),
+    path('admin-list/', AdminUserList.as_view() ),
     path('adminprofile/<uuid:uuid>/', AdminProfileDetail.as_view()),
     path('create_admin/', CreateAdminAPIView.as_view() ),
     path('list-users/', UserListView.as_view()),
