@@ -1,0 +1,15 @@
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+
+# Ignore development files
+.vscode/
+.idea/
+.git/
+
+# Ignore database files
+# db.sqlite3
+
+# Ignore static files (if served separately)
+static/
+media/
