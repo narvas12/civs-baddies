@@ -21,7 +21,6 @@ from django.db import IntegrityError
 from .serializers import (
     AddressSerializer,
     AdminLoginSerializer,
-    # BillingAddressSerializer,
     CreateAdminSerializer,
     ChangePasswordSerializer,
     CreateUserSerializer,
