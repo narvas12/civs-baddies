@@ -62,6 +62,7 @@ google-resumable-media==2.7.0
 googleapis-common-protos==1.56.4
 grpcio==1.62.2
 grpcio-status==1.62.2
+gunicorn==22.0.0
 httplib2==0.21.0
 hvac==2.1.0
 idna==3.6
