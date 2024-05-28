@@ -7,8 +7,7 @@ from products.serializers import ProductSerializer
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'name', 'image', 'price', 'category', 'discounted_percentage', 'product_tag']  # Include necessary fields
-
+        fields = ['id', 'name', 'image', 'price', 'category', 'discounted_percentage', 'product_tag']  
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -23,7 +22,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 
 class WishlistItemSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)  # Use the modified ProductSerializer
+    product = ProductSerializer(read_only=True) 
     class Meta:
         model = WishlistItem
         fields = ['product']

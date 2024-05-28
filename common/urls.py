@@ -10,7 +10,6 @@ from rest_framework_simplejwt.views import (TokenRefreshView,)
 
 urlpatterns = [
     
-        #RATING ROUTES
         path('ratings/create-rating', RatingCreateView.as_view()),
         path('ratings/ratings', RatingsView.as_view()),
         path('dashboard-data/', DashboardData.as_view()),

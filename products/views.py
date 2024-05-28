@@ -13,6 +13,21 @@ from users.permissions import IsStaffUser
 
 
 
+# class ProductCreateAPIView(generics.CreateAPIView):
+#     permission_classes = [IsStaffUser]
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response({
+#             'message': 'Product created successfully',
+#             'product': serializer.data
+#         }, status=status.HTTP_201_CREATED)
+
+
 class ProductCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsStaffUser]
 
@@ -26,40 +41,8 @@ class ProductCreateAPIView(generics.CreateAPIView):
         return Response({'message': 'Product created successfully'}, status=status.HTTP_201_CREATED)
     
 
-# class ProductCreateAPIView(generics.CreateAPIView):
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-#     def create(self, request, *args, **kwargs):
-#         # Check if data is a single product or multiple products
-#         is_multiple = isinstance(request.data, list)
-#         if is_multiple:
-#             serializer = self.get_serializer(data=request.data, many=True)
-#         else:
-#             serializer = self.get_serializer(data=request.data)
-
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-
-#         if is_multiple:
-#             return Response({'message': 'Products created successfully'}, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response({'message': 'Product created successfully'}, status=status.HTTP_201_CREATED)
-
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance, data=request.data, partial=True)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-
-#         return Response({'message': 'Product updated successfully'}, status=status.HTTP_200_OK)
-
-
-
-
 class ProductUpdateAPIView(generics.UpdateAPIView):
     permission_classes = [IsStaffUser]
-
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
@@ -69,27 +52,26 @@ class ProductUpdateAPIView(generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-class ProductListCreateAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsStaffUser]
+# class ProductListCreateAPIView(generics.ListCreateAPIView):
+#     permission_classes = [IsStaffUser]
 
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
 
-    def create(self, request, *args, **kwargs):
-        # Check if the request contains a list of products
-        if isinstance(request.data, list):
-            serializer = self.get_serializer(data=request.data, many=True)
-        else:
-            serializer = self.get_serializer(data=request.data)
+#     def create(self, request, *args, **kwargs):
+#         # Check if the request contains a list of products
+#         if isinstance(request.data, list):
+#             serializer = self.get_serializer(data=request.data, many=True)
+#         else:
+#             serializer = self.get_serializer(data=request.data)
 
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+#         serializer.is_valid(raise_exception=True)
+#         self.perform_create(serializer)
+#         headers = self.get_success_headers(serializer.data)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
 
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -163,9 +145,9 @@ class VariationListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = VariationSerializer
 
     def create(self, request, *args, **kwargs):
-        # Get the product ID from the request data
+
         product_id = request.data.get('product_id')
-        # Get the list of variations from the request data
+
         variations_data = request.data.get('variations', [])
 
         if not product_id or not variations_data:
@@ -174,7 +156,7 @@ class VariationListCreateAPIView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Fetch the product instance
+
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
@@ -183,17 +165,17 @@ class VariationListCreateAPIView(generics.ListCreateAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Create the variations
-        created_variations = []
+
+        variations = []
         for variation_data in variations_data:
-            variation_data['product_variant'] = product.id  # Add product_variant to each variation data
+            variation_data['product_variant'] = product.id 
             serializer = self.get_serializer(data=variation_data)
             serializer.is_valid(raise_exception=True)
             created_variation = serializer.save()
-            created_variations.append(created_variation)
+            variations.append(created_variation)
 
         return Response(
-            VariationSerializer(created_variations, many=True).data,
+            VariationSerializer(variations, many=True).data,
             status=status.HTTP_201_CREATED
         )
 

@@ -20,14 +20,14 @@ class ProductManager(models.manager):
         """
 
         history = []
-        for order_item in product.orderitems.all():  # Loop through order items linked to the product
+        for order_item in product.orderitems.all(): 
             order = order_item.order
             customer = order.buyer
             history.append({
                 'order_number': order.order_number,
-                'customer_name': f"{customer.first_name} {customer.last_name}",  # Assuming first and last name fields
+                'customer_name': f"{customer.first_name} {customer.last_name}", 
                 'date_ordered': order.created_at,
-                'order_status': order.get_status_display(),  # Use get_status_display() for human-readable status
+                'order_status': order.get_status_display(), 
                 'quantity': order_item.quantity,
             })
         return history

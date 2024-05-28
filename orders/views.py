@@ -26,54 +26,42 @@ class OrderCreateAPIView(APIView):
     def post(self, request, format=None):
         customer_id = request.data.get('customer_id')
 
-        # Check if the customer_id is provided
         if not customer_id:
             return Response({"message": "Customer ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Check if the user exists
             user = get_user_model().objects.get(customer_id=customer_id)
         except get_user_model().DoesNotExist:
             return Response({"message": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch cart items for the customer
         cart_items = CartItem.objects.filter(user=user)
 
-        # Check if there are any cart items
         if not cart_items.exists():
             return Response({"message": "No items in the cart."}, status=status.HTTP_400_BAD_REQUEST)
 
         total_cost = sum(item.total_price for item in cart_items)
 
-        # Fetch default shipping and billing addresses for the user
         try:
-            # Get the default shipping address
             shipping_address = Address.objects.get(user=user, address_type=Address.SHIPPING)
-            # Get the default billing address
             billing_address = Address.objects.get(user=user, address_type=Address.BILLING)
         except Address.DoesNotExist:
             return Response({"message": "Default shipping or billing address not found."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create order data
         order_data = {
             'buyer': user.id,
             'status': Order.PENDING,
             'is_paid': False,
             'shipping_address': shipping_address.pk,
             'billing_address': billing_address.pk,
-            'payment_reference': str(uuid.uuid4())  # Generate a unique payment reference
+            'payment_reference': str(uuid.uuid4())  
         }
 
-        # Serialize order data
         order_serializer = OrderSerializer(data=order_data)
         if order_serializer.is_valid():
-            # Save order instance
             order_instance = order_serializer.save()
 
-            # Create order items from cart items
             products = []
             for cart_item in cart_items:
-                # Create order item and set the order field
                 order_item = OrderItem.objects.create(
                     order=order_instance,
                     product=cart_item.product,
@@ -81,28 +69,24 @@ class OrderCreateAPIView(APIView):
                     total=cart_item.total_price
                 )
 
-                # Add product details to the products list
                 products.append({
                     'name': cart_item.product.name,
                     'price': cart_item.product.price,
                     'image_url': cart_item.product.image
                 })
 
-            # Empty the customer's cart after order creation
             # cart_items.delete()
 
-            # Pass necessary data to send_order_confirmation_email
             send_order_confirmation_email(
                 user=user,
                 order_instance=order_instance,
                 products=products,
-                order_number=order_instance.order_number,  # Pass the order number
-                total=total_cost  # Pass the total cost
+                order_number=order_instance.order_number,  
+                total=total_cost  
             )
 
-            # Prepare data for Paystack payment initiation (frontend use)
             payment_data = {
-                'amount': int(total_cost),  # Convert to kobo for Paystack
+                'amount': int(total_cost),
                 'email': user.email,
                 'customer': user.get_full_name(),
                 'reference': order_data['payment_reference']
@@ -120,19 +104,15 @@ class PaymentView(APIView):
         except Order.DoesNotExist:
             return Response({'error': 'Invalid order ID.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Fetch user email from the related buyer
         email = order.buyer.email
 
-        # Calculate the total amount payable by summing up the total cost of all order items
         amount = sum(order_item.total for order_item in order.orderitems.all())
 
-        # Construct Paystack API request payload
         paystack_secret_key = settings.PAYSTACK_SECRET_KEY
         payload = {
             'email': email,
             'amount': amount,
-            'callback_url': 'https://your-domain.com/callback/' + str(order_id),  # Include order ID in callback URL
-            # ... other parameters (optional)
+            'callback_url': 'https://your-domain.com/callback/' + str(order_id), 
         }
 
         headers = {
@@ -142,7 +122,7 @@ class PaymentView(APIView):
 
         try:
             response = requests.post('https://api.paystack.co/transaction/initialize', json=payload, headers=headers)
-            response.raise_for_status()  # Raise an exception for non-2xx status codes
+            response.raise_for_status()  
 
             data = response.json()
             authorization_url = data.get('authorization_url')
@@ -150,11 +130,9 @@ class PaymentView(APIView):
             return Response({'authorization_url': authorization_url}, status=status.HTTP_200_OK)
 
         except requests.exceptions.RequestException as e:
-            # Handle API call errors gracefully
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            # Handle unexpected errors
             return Response({'error': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -168,7 +146,6 @@ class PaymentCallbackView(APIView):
 
         paystack_secret_key = settings.PAYSTACK_SECRET_KEY
 
-        # Retrieve reference from callback URL or request data (depending on your implementation)
         reference = request.GET.get('reference') 
 
         headers = {
@@ -177,7 +154,7 @@ class PaymentCallbackView(APIView):
 
         try:
             response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
-            response.raise_for_status()  # Raise an exception for non-2xx status codes
+            response.raise_for_status()  
 
             data = response.json()
 
@@ -185,12 +162,11 @@ class PaymentCallbackView(APIView):
                 order.is_paid = True
                 order.save()
 
-                # Update or create transaction
                 transaction, created = Transaction.objects.get_or_create(
                     order=order,
                     reference=reference,
                     defaults={
-                        'amount': data['data']['amount'],  # Assuming amount is returned in subunit of currency
+                        'amount': data['data']['amount'],  
                         'status': data['data']['status'],
                         'charged_at': data['data'].get('charged_at'),
                         'message': data['data'].get('message'),
@@ -198,25 +174,19 @@ class PaymentCallbackView(APIView):
                 )
 
         except requests.exceptions.RequestException as e:
-            # Handle API call errors gracefully
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            # Handle unexpected errors
             return Response({'error': 'An unexpected error occured'},  status=status.HTTP_400_BAD_REQUEST)
 
 
 
 class TrendingProducts(APIView):
     def get(self, request, format=None):
-        # Get the manager
         manager = Order.objects
 
-        # Get the trending products
         trending_products = manager.get_trending_products()
 
-        # Serialize the data
         serializer = TrendingProductSerializer(trending_products, many=True)
 
-        # Return the serialized data
         return Response(serializer.data)

@@ -9,7 +9,7 @@ from .views import (
                     ProductCreateAPIView,
                     ProductDeleteAPIView, 
                     ProductListAPIView,
-                    ProductListCreateAPIView,
+                    # ProductListCreateAPIView,
                     ProductRetrieveUpdateDestroyAPIView,
                     ProductUpdateAPIView,
                     VariationListCreateAPIView,
@@ -23,7 +23,7 @@ urlpatterns = [
     path('create_products/', ProductCreateAPIView.as_view()),
     path('product/<int:pk>/', ProductUpdateAPIView.as_view()),
 
-    path('add_products/', ProductListCreateAPIView.as_view()),
+    # path('add_products/', ProductListCreateAPIView.as_view()),
     path('update_product/<int:pk>/', ProductRetrieveUpdateDestroyAPIView.as_view()),
 
     path('products_list/', ProductListAPIView.as_view()),

@@ -31,11 +31,10 @@ class AddToCartView(APIView):
         try:
             cart_item = CartItem.objects.get(user=user, product=product)
             cart_item.quantity += int(quantity)
-            cart_item.active = True  # Marking the item as active
+            cart_item.active = True 
             cart_item.save()
         except CartItem.DoesNotExist:
-            cart_item = CartItem.objects.create(user=user, product=product, quantity=int(quantity), active=True)  # Marking the item as active
-
+            cart_item = CartItem.objects.create(user=user, product=product, quantity=int(quantity), active=True) 
         serializer = CartItemSerializer(cart_item)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -68,7 +67,7 @@ class UpdateCartItemQuantityView(APIView):
             return Response({'error': 'Invalid quantity provided'}, status=status.HTTP_400_BAD_REQUEST)
 
         cart_item.quantity = new_quantity
-        cart_item.clean_fields()  # Ensure data validation
+        cart_item.clean_fields()  
         cart_item.save()
 
         serializer = CartItemSerializer(cart_item)
@@ -77,9 +76,9 @@ class UpdateCartItemQuantityView(APIView):
 
 
 class CartItemListView(APIView):
-    def get(self, request, customer_id):  # Change user_id to customer_id
+    def get(self, request, customer_id):  
         try:
-            user = CustomUser.objects.get(customer_id=customer_id)  # Change pk to customer_id
+            user = CustomUser.objects.get(customer_id=customer_id)  
         except CustomUser.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -87,7 +86,7 @@ class CartItemListView(APIView):
         serializer = CartItemSerializer(cart_items, many=True)
         return Response(serializer.data)
 
-    def post(self, request, customer_id):  # Change user_id to customer_id
+    def post(self, request, customer_id):  
         add_to_cart_view = AddToCartView.as_view()
         return add_to_cart_view(request)
 
@@ -132,21 +131,17 @@ class AddWishlistToCartView(APIView):
             for wishlist_item in wishlist_items:
                 product = wishlist_item.product
 
-                # Check if the product already exists in the cart
                 existing_cart_item = CartItem.objects.filter(user_id=user_id, product=product).first()
 
-                # If the product already exists, increment the quantity
                 if existing_cart_item:
                     existing_cart_item.quantity += 1
                     existing_cart_item.save()
                 else:
-                    # Retrieve default size and color IDs from variations
                     default_variation = product.variation_set.first()
                     if default_variation:
                         size_id = default_variation.size_id
                         color_id = default_variation.color_id
                     else:
-                        # Handle case where no variations exist
                         size_id = None
                         color_id = None
 
@@ -154,8 +149,8 @@ class AddWishlistToCartView(APIView):
                         user_id=user_id,
                         product=product,
                         quantity=1,  
-                        size_id=size_id,  # Assign the size ID
-                        color_id=color_id,  # Assign the color ID
+                        size_id=size_id,  
+                        color_id=color_id,  
                         active=True
                     )
                 wishlist_item.delete()

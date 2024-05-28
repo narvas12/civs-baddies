@@ -18,7 +18,7 @@ class RatingManager(models.Manager):
         rating_type = int(rating_type)
         
         try:
-            RatingTag(rating_type)  # Attempt to create an enum member from the value
+            RatingTag(rating_type)  
             
             rating_Id = RatingTag[RatingTag(rating_type).name].value
             rating = Rating(rating_type=rating_Id, description=description)
@@ -34,7 +34,6 @@ class RatingManager(models.Manager):
     def get_ratings(self, rating_type):
         Rating = apps.get_model('common.Rating')
         
-        # If no rating type was passed to request, proceed to fetch all ratings regardless of type.
         if rating_type is None:
             records = Rating.objects.all()
             if len(records) < 1:
@@ -68,7 +67,6 @@ class RatingManager(models.Manager):
             if not records:
                 raise ValidationError("No records were found")
             
-            #formatted_records = format_rating_records(records)
             formatted_records = format_rating_records(records)
             return formatted_records
         
@@ -82,21 +80,16 @@ class RatingManager(models.Manager):
 class CommonManager(models.Manager):
    
     def get_statistics(self):
-        # Get the models
         Rating = apps.get_model('common', 'Rating')
         Order = apps.get_model('orders', 'Order')
         Product = apps.get_model('products', 'Product')
 
-        # Get average ratings
         avg_ratings = Rating.objects.all().aggregate(Avg('rating_type'))['rating_type__avg']
 
-        # Get total completed orders
         total_completed_orders = Order.objects.filter(status=Order.COMPLETED).count()
 
-        # Get total pending orders
         total_pending_orders = Order.objects.filter(status=Order.PENDING).count()
 
-        # Get total available products
         total_available_products = Product.objects.filter(is_suspended=False).count()
 
         return {

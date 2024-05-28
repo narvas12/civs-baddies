@@ -76,25 +76,24 @@ class OrderItem(models.Model):
     
     @staticmethod
     def create_order_item(order, product, quantity):
-        total = quantity * product.price  # Calculate total based on quantity and product price
+        total = quantity * product.price  
         order_item = OrderItem()
         order_item.order = order
         order_item.product = product
         order_item.quantity = quantity
-        order_item.total = total  # Set the total
-        order_item.save()
+        order_item.total = total  
         return order_item
     
 
 
 class Transaction(models.Model):
-    order = models.ForeignKey(Order, related_name='transactions', on_delete=models.CASCADE)  # Link to the related Order
-    reference = models.CharField(max_length=255, unique=True)  # Unique transaction reference from Paystack
-    amount = models.DecimalField(max_digits=10, decimal_places=2)  # Amount paid in subunit of currency
-    status = models.CharField(max_length=255)  # Status received from Paystack (e.g., success, failed)
-    gateway = models.CharField(max_length=255, blank=True)  # Payment gateway used (e.g., paystack)
-    charged_at = models.DateTimeField(blank=True, null=True)  # Timestamp of when the payment was charged (optional)
-    message = models.TextField(blank=True)  # Optional message from Paystack
+    order = models.ForeignKey(Order, related_name='transactions', on_delete=models.CASCADE) 
+    reference = models.CharField(max_length=255, unique=True)  
+    amount = models.DecimalField(max_digits=10, decimal_places=2) 
+    status = models.CharField(max_length=255)  
+    gateway = models.CharField(max_length=255, blank=True) 
+    charged_at = models.DateTimeField(blank=True, null=True)  
+    message = models.TextField(blank=True) 
 
     def __str__(self):
         return f"Transaction for Order {self.order.order_number} (Ref: {self.reference})"

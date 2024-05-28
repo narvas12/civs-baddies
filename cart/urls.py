@@ -1,4 +1,3 @@
-# urls.py
 from django.urls import path
 from .background_job import start_background_tasks
 

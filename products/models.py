@@ -30,16 +30,15 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)  
     desc = models.TextField(_("Description"), blank=True)
-    image = CloudinaryField("product/images/", blank=True)
+    image = CloudinaryField("product/image/", blank=True)
     price = models.DecimalField(decimal_places=2, max_digits=10)
-    discounted_percentage = models.DecimalField(decimal_places=2, max_digits=10, blank=True, null=True) 
+    discounted_percentage = models.DecimalField(decimal_places=2, max_digits=10, blank=True, null=True)
     quantity = models.PositiveIntegerField(default=1)
-    initial_stock_quantity = models.PositiveIntegerField(default=0) 
+    initial_stock_quantity = models.PositiveIntegerField(default=0)
     is_suspended = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    
     class Meta:
         ordering = ("-created_at",)
 

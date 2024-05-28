@@ -9,7 +9,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Rating
 
-# Create your views here.
 
 class RatingCreateView(GenericAPIView):
     serializer_class = RatingCreateSerializer
@@ -35,23 +34,19 @@ class RatingsView(GenericAPIView):
         rating_type = self.request.query_params.get('rating_type', None)
         records = Rating.objects.get_ratings(rating_type)
         
-        page = self.paginate_queryset(records)  # Apply pagination
+        page = self.paginate_queryset(records)  
         serializer = self.serializer_class(page, many=True)
         if serializer.is_valid:
-                return self.get_paginated_response(serializer.data) # Return paginated response
+                return self.get_paginated_response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DashboardData(APIView):
     def get(self, request, format=None):
-        # Get the manager
         manager = CommonManager()
 
-        # Get the statistics
         statistics = manager.get_statistics()
 
-        # Serialize the data
         serializer = DashboardDataSerializer(statistics)
 
-        # Return the serialized data
         return Response(serializer.data)
