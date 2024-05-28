@@ -1,0 +1,35 @@
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Virtual environment
+civs_env
+.venv/
+
+# Build files
+*.pyc
+__pycache__/
+
+# Test files, if applicable
+*.pyd
+
+# IDE or editor specific files
+*.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Local documentation
+README.md
+
+# Coverage reports
+.coverage
+
+# Scratch files
+*.scratch
+
+# Temporary files
+*~
