@@ -1,14 +1,16 @@
 from django.forms import ValidationError
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from products.filters import ProductCategoryFilter, ProductFilter
-from .models import Product, ProductCategory, Variation
+from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, Variation
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
-from .serializers import ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, VariationSerializer 
+from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, VariationSerializer 
 from users.permissions import IsStaffUser
+from rest_framework.permissions import IsAuthenticated
 
 
 
@@ -209,3 +211,46 @@ class VariationRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
     
     queryset = Variation.objects.all()
     serializer_class = VariationSerializer
+
+
+
+class CoverPageCarouselAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        coverpages = CoverPageCarousel.objects.all()
+        serializer = CoverPageCarouselSerializer(coverpages, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        images = request.FILES.getlist('images')
+        image_urls = []
+        for image in images:
+            coverpage = CoverPageCarousel(images=image)
+            coverpage.save()
+            image_urls.append(coverpage.images.url)
+        return Response({'image_urls': image_urls}, status=status.HTTP_201_CREATED)
+
+
+class LatestArivalAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        latest_arivals = LatestArival.objects.all()
+        serializer = LatestArivalSerializer(latest_arivals, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = LatestArivalSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk, format=None):
+        latest_arival = get_object_or_404(LatestArival, pk=pk)
+        serializer = LatestArivalSerializer(latest_arival, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

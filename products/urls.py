@@ -4,6 +4,8 @@ from django.urls import path
 from .views import (
                     
                    
+                    CoverPageCarouselAPIView,
+                    LatestArivalAPIView,
                     ProductCategoryCreateAPIView,
                     ProductCategoryListAPIView,
                     ProductCreateAPIView,
@@ -36,5 +38,9 @@ urlpatterns = [
     path('variations/', VariationListCreateAPIView.as_view()),
     path('list-variations/', VariationListAPIView.as_view()),
     path('variations/<int:pk>/', VariationRetrieveUpdateDestroyAPIView.as_view()),
+
+
+    path('coverpage-carousel/', CoverPageCarouselAPIView.as_view()),
+    path('latest-arrivals/', LatestArivalAPIView.as_view()),
 ]
 

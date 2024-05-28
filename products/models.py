@@ -46,6 +46,15 @@ class Product(models.Model):
         return self.name if self.name else "Product (No Name)"
 
 
+class CoverPageCarousel(models.Model):
+    images = CloudinaryField("product/image/coverpage", blank=True)
+
+
+class LatestArival(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    image = CloudinaryField("product/image/latest", blank=True)
+
+
 class Variation(models.Model):
     product_variant = models.ForeignKey(Product, on_delete=models.CASCADE)
     size = models.CharField(max_length=100, null=True, blank=True)

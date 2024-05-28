@@ -296,17 +296,19 @@ if not DEBUG:
     )
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'devcaliban@gmail.com' # Replace with your Gmail address
-EMAIL_HOST_PASSWORD = 'tpatxaoryaiuzzrp' # Replace with your Gmail password or app password
-EMAIL_USE_TLS = True
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = 'devcaliban@gmail.com' # Replace with your Gmail address
+# EMAIL_HOST_PASSWORD = 'tpatxaoryaiuzzrp' # Replace with your Gmail password or app password
+# EMAIL_USE_TLS = True
 
-# EMAIL_BACKEND = 'sendgrid.SendGridBackend'
-# SENDGRID_API_KEY = 'YOUR_SENDGRID_API_KEY'
-# EMAIL_HOST_USER = 'your_email@example.com' 
+SENDGRID_LIVE_KEY='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'
+SENDGRID_SENDER_ID='business@wallx.co'
 
+
+
+# Social Auth Config 
 # client_id = 1030132047010-iipdf4mhb39ape0ba636dq3beejcm2q6.apps.googleusercontent.com
 # client_secret = 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 
 

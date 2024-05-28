@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, ProductCategory, Variation, get_default_product_category
+from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, Variation, get_default_product_category
 from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from django.conf import settings
@@ -172,3 +172,25 @@ class VariationSerializer(serializers.ModelSerializer):
 
 class ProductDeleteSerializer(serializers.Serializer):
     product_ids = serializers.ListField(child=serializers.IntegerField())
+
+
+class CoverPageCarouselSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CoverPageCarousel
+        fields = ['id', 'images', 'image_url']
+
+    def get_image_url(self, obj):
+        return obj.images.url if obj.images else None
+
+
+class LatestArivalSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LatestArival
+        fields = ['id', 'product', 'image', 'image_url']
+
+    def get_image_url(self, obj):
+        return obj.image.url if obj.image else None
