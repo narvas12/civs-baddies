@@ -7,7 +7,8 @@ from .views import (
                     ProductCategoryCreateAPIView,
                     ProductCategoryListAPIView,
                     ProductCreateAPIView,
-                    ProductDeleteAPIView, 
+                    ProductDeleteAPIView,
+                    ProductDetailView, 
                     ProductListAPIView,
                     # ProductListCreateAPIView,
                     ProductRetrieveUpdateDestroyAPIView,
@@ -25,6 +26,7 @@ urlpatterns = [
 
     # path('add_products/', ProductListCreateAPIView.as_view()),
     path('update_product/<int:pk>/', ProductRetrieveUpdateDestroyAPIView.as_view()),
+    path('product-detail/<int:pk>/', ProductDetailView.as_view()),
 
     path('products_list/', ProductListAPIView.as_view()),
     path('delete_products/', ProductDeleteAPIView.as_view()),
