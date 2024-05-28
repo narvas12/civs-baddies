@@ -303,9 +303,6 @@ EMAIL_HOST_USER = 'devcaliban@gmail.com' # Replace with your Gmail address
 EMAIL_HOST_PASSWORD = 'tpatxaoryaiuzzrp' # Replace with your Gmail password or app password
 EMAIL_USE_TLS = True
 
-# SENDGRID_LIVE_KEY='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'
-# SENDGRID_SENDER_ID='business@wallx.co'a
-
 
 
 # Social Auth Config 
