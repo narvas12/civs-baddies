@@ -9,34 +9,63 @@ from users.models import CustomUser
 from .serializers import CartItemSerializer, WishlistItemSerializer
 
 
+
 class AddToCartView(APIView):
     def post(self, request):
-        user_id = request.data.get('user_id')
+        user = request.user
         product_id = request.data.get('product_id')
         quantity = request.data.get('quantity')
         
-        if not all([user_id, product_id, quantity]):
-            return Response({'error': 'User ID, product ID, and quantity are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = CustomUser.objects.get(pk=user_id)
-        except CustomUser.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-
+        if not user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if not all([product_id, quantity]):
+            return Response({'error': 'Product ID and quantity are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             product = Product.objects.get(pk=product_id)
         except Product.DoesNotExist:
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-
+        
         try:
             cart_item = CartItem.objects.get(user=user, product=product)
             cart_item.quantity += int(quantity)
-            cart_item.active = True 
+            cart_item.active = True
             cart_item.save()
         except CartItem.DoesNotExist:
-            cart_item = CartItem.objects.create(user=user, product=product, quantity=int(quantity), active=True) 
+            cart_item = CartItem.objects.create(user=user, product=product, quantity=int(quantity), active=True)
+        
         serializer = CartItemSerializer(cart_item)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+# class AddToCartView(APIView):
+#     def post(self, request):
+#         user_id = request.data.get('user_id')
+#         product_id = request.data.get('product_id')
+#         quantity = request.data.get('quantity')
+        
+#         if not all([user_id, product_id, quantity]):
+#             return Response({'error': 'User ID, product ID, and quantity are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             user = CustomUser.objects.get(pk=user_id)
+#         except CustomUser.DoesNotExist:
+#             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+#         try:
+#             product = Product.objects.get(pk=product_id)
+#         except Product.DoesNotExist:
+#             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+#         try:
+#             cart_item = CartItem.objects.get(user=user, product=product)
+#             cart_item.quantity += int(quantity)
+#             cart_item.active = True 
+#             cart_item.save()
+#         except CartItem.DoesNotExist:
+#             cart_item = CartItem.objects.create(user=user, product=product, quantity=int(quantity), active=True) 
+#         serializer = CartItemSerializer(cart_item)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 
