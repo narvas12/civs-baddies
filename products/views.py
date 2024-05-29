@@ -8,7 +8,7 @@ from products.filters import ProductCategoryFilter, ProductFilter
 from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, Variation
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
-from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, VariationSerializer 
+from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, SupercategorySerializer, VariationSerializer 
 from users.permissions import IsStaffUser
 from rest_framework.permissions import IsAuthenticated
 
@@ -127,7 +127,21 @@ class ProductDeleteAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProductCategoryCreateAPIView(generics.CreateAPIView):
+class SuperCategoryCreateAPIView(generics.CreateAPIView):
+    permission_classes = [IsStaffUser]
+
+    serializer_class = SupercategorySerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class CategoryCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsStaffUser]
 
     serializer_class = ProductCategorySerializer

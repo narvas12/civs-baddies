@@ -6,12 +6,13 @@ from .views import (
                    
                     CoverPageCarouselAPIView,
                     LatestArivalAPIView,
-                    ProductCategoryCreateAPIView,
+                    CategoryCreateAPIView,
                     ProductCategoryListAPIView,
                     ProductCreateAPIView,
                     ProductDeleteAPIView,
                     ProductDetailView, 
                     ProductListAPIView,
+                    SuperCategoryCreateAPIView,
                     # ProductListCreateAPIView,
                     ProductRetrieveUpdateDestroyAPIView,
                     ProductUpdateAPIView,
@@ -32,7 +33,10 @@ urlpatterns = [
 
     path('products_list/', ProductListAPIView.as_view()),
     path('delete_products/', ProductDeleteAPIView.as_view()),
-    path('categories/add/', ProductCategoryCreateAPIView.as_view()),
+
+    path('super-categories/add/', SuperCategoryCreateAPIView.as_view()),
+
+    path('categories/add/', CategoryCreateAPIView.as_view()),
     path('categories/list/', ProductCategoryListAPIView.as_view()),
 
     path('variations/', VariationListCreateAPIView.as_view()),
@@ -42,5 +46,7 @@ urlpatterns = [
 
     path('coverpage-carousel/', CoverPageCarouselAPIView.as_view()),
     path('latest-arrivals/', LatestArivalAPIView.as_view()),
+
+
 ]
 

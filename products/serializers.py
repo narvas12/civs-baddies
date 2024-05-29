@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, Variation, get_default_product_category
+from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, Supercategory, Variation, get_default_product_category
 from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from django.conf import settings
@@ -9,6 +9,13 @@ import string
 from cloudinary.uploader import upload
 
 User = get_user_model()
+
+
+class SupercategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supercategory
+        fields = '__all__'
+
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:

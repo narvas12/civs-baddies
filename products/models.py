@@ -6,7 +6,15 @@ from cloudinary.models import CloudinaryField
 
 User = get_user_model()
 
+
+class Supercategory(models.Model):
+    name = models.CharField(max_length=15)
+
+    def __str__(self) -> str:
+        return self.name
+
 class ProductCategory(models.Model):
+    super_category = models.ForeignKey(Supercategory, on_delete=models.DO_NOTHING)
     name = models.CharField(unique=True, max_length=100)
     icon = CloudinaryField("product/category/icons/", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
