@@ -47,9 +47,5 @@ urlpatterns = [
     path('coverpage-carousel/add/', CoverPageCarouselAPIView.as_view()),
     path('latest-arrivals/add/', LatestArivalAPIView.as_view()),
 
-super-categories/add/
-coverpage-carousel/add/
-latest-arrivals/add/
-
 ]
 
