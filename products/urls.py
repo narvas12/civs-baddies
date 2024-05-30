@@ -44,9 +44,12 @@ urlpatterns = [
     path('variations/<int:pk>/', VariationRetrieveUpdateDestroyAPIView.as_view()),
 
 
-    path('coverpage-carousel/', CoverPageCarouselAPIView.as_view()),
-    path('latest-arrivals/', LatestArivalAPIView.as_view()),
+    path('coverpage-carousel/add/', CoverPageCarouselAPIView.as_view()),
+    path('latest-arrivals/add/', LatestArivalAPIView.as_view()),
 
+super-categories/add/
+coverpage-carousel/add/
+latest-arrivals/add/
 
 ]
 
