@@ -9,29 +9,14 @@ from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, V
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
 from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, SupercategorySerializer, VariationSerializer 
-from users.permissions import IsStaffUser
 from rest_framework.permissions import IsAuthenticated
 
 
 
 
-# class ProductCreateAPIView(generics.CreateAPIView):
-#     permission_classes = [IsStaffUser]
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response({
-#             'message': 'Product created successfully',
-#             'product': serializer.data
-#         }, status=status.HTTP_201_CREATED)
-
 
 class ProductCreateAPIView(generics.CreateAPIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
 
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -44,7 +29,7 @@ class ProductCreateAPIView(generics.CreateAPIView):
     
 
 class ProductUpdateAPIView(generics.UpdateAPIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
@@ -57,27 +42,10 @@ class ProductUpdateAPIView(generics.UpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-# class ProductListCreateAPIView(generics.ListCreateAPIView):
-#     permission_classes = [IsStaffUser]
-
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-#     def create(self, request, *args, **kwargs):
-#         # Check if the request contains a list of products
-#         if isinstance(request.data, list):
-#             serializer = self.get_serializer(data=request.data, many=True)
-#         else:
-#             serializer = self.get_serializer(data=request.data)
-
-#         serializer.is_valid(raise_exception=True)
-#         self.perform_create(serializer)
-#         headers = self.get_success_headers(serializer.data)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
 
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
 
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -104,8 +72,9 @@ class ProductListAPIView(generics.ListAPIView):
     filterset_class = ProductFilter
 
 
+
 class ProductDeleteAPIView(APIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = ProductDeleteSerializer(data=request.data)
@@ -128,7 +97,7 @@ class ProductDeleteAPIView(APIView):
 
 
 class SuperCategoryCreateAPIView(generics.CreateAPIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
 
     serializer_class = SupercategorySerializer
 
@@ -142,7 +111,7 @@ class SuperCategoryCreateAPIView(generics.CreateAPIView):
 
 
 class CategoryCreateAPIView(generics.CreateAPIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
 
     serializer_class = ProductCategorySerializer
 
@@ -167,7 +136,7 @@ class ProductCategoryListAPIView(generics.ListAPIView):
 
 
 class VariationListCreateAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
 
 
     queryset = Variation.objects.all()
@@ -215,12 +184,10 @@ class VariationListAPIView(generics.ListAPIView):
     filter_backends = [SearchFilter]
     filterset_class = ProductFilter
 
-# class VariationListCreateAPIView(generics.ListCreateAPIView):
-#     queryset = Variation.objects.all()
-#     serializer_class = VariationSerializer
+
 
 class VariationRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
 
     
     queryset = Variation.objects.all()

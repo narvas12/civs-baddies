@@ -7,6 +7,38 @@ from cart.models import CartItem, WishlistItem
 from products.models import Product
 from users.models import CustomUser
 from .serializers import CartItemSerializer, WishlistItemSerializer
+from .utils import add_to_session_cart
+from rest_framework.permissions import  AllowAny
+
+
+
+# class AddToCartView(APIView):
+#     permission_classes = [AllowAny]
+
+
+#     def post(self, request):
+#         product_id = request.data.get('product_id')
+#         quantity = request.data.get('quantity')
+        
+#         if not all([product_id, quantity]):
+#             return Response({'error': 'Product ID and quantity are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         product = get_object_or_404(Product, pk=product_id)
+        
+#         if request.user.is_authenticated:
+#             user = request.user
+#             cart_item, created = CartItem.objects.get_or_create(user=user, product=product)
+#             if not created:
+#                 cart_item.quantity += int(quantity)
+#             else:
+#                 cart_item.quantity = int(quantity)
+#             cart_item.active = True
+#             cart_item.save()
+#             serializer = CartItemSerializer(cart_item)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         else:
+#             cart_item = add_to_session_cart(request, product_id, quantity)
+#             return Response(cart_item, status=status.HTTP_201_CREATED)
 
 
 
@@ -37,6 +69,7 @@ class AddToCartView(APIView):
         
         serializer = CartItemSerializer(cart_item)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 # class AddToCartView(APIView):
 #     def post(self, request):
