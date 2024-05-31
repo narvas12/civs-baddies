@@ -14,6 +14,7 @@ from users.views import (
     CreateUserAPIView,
     
     UnlockAdminUserAPIView,
+    UserDetailsView,
     UserLoginAPIView,
     UserListView,
     CustomerProfileAPIView,
@@ -58,4 +59,6 @@ urlpatterns = [
     
     path('customer_profiles/', CustomerProfileListAPIView.as_view(), name='customer_profiles'),
     path('delete_all_profiles/', DeleteAllProfilesAPIView.as_view(), name='delete_all_profiles'),
+
+    path('active-user-details/', UserDetailsView.as_view()),
 ]

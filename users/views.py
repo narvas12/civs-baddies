@@ -77,6 +77,14 @@ class CreateUserAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class UserDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = CustomUserSerializer(user)
+        return Response(serializer.data)
+
 
 class UserUpdateView(APIView):
     permission_classes = [IsAuthenticated]
