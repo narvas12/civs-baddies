@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ProductCategory, Product, Variation
+from .models import ProductCategory, Product, Supercategory, Variation
 
 
 
@@ -12,9 +12,14 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(Supercategory)
+class ProductCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name']
+
+
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
-    list_display = ['id','name']
+    list_display = ['name']
 
 
 @admin.register(Variation)
