@@ -154,6 +154,18 @@ DATABASES = {
 }
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'civsrxyr_manager',
+#         'USER': 'civsrxyr_admin',
+#         'PASSWORD': 'bKi8HZaCi0P5',
+#         'HOST': 'civsandbaddies.com',  # Set to 'localhost' if the database is hosted on the same machine
+#         'PORT': '5432',       # Default port for PostgreSQL
+#     }
+# }
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 

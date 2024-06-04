@@ -31,5 +31,6 @@ README.md
 # Scratch files
 *.scratch
 
-# Temporary files
-*~
+
+db.sqlite3
+models
