@@ -8,6 +8,7 @@ from products.filters import ProductCategoryFilter, ProductFilter
 from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, Variation
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, SupercategorySerializer, VariationSerializer 
 from rest_framework.permissions import IsAuthenticated
 
@@ -212,6 +213,14 @@ class CoverPageCarouselAPIView(APIView):
             image_urls.append(coverpage.images.url)
         return Response({'image_urls': image_urls}, status=status.HTTP_201_CREATED)
 
+class CoverPageCarouselListView(generics.ListAPIView):
+    queryset = CoverPageCarousel.objects.all()
+    serializer_class = CoverPageCarouselSerializer
+
+
+class LatestArrivalListView(generics.ListAPIView):
+    queryset = LatestArival.objects.all()
+    serializer_class = LatestArivalSerializer
 
 class LatestArivalAPIView(APIView):
     # permission_classes = [IsAuthenticated]

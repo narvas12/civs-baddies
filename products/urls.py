@@ -5,8 +5,10 @@ from .views import (
                     
                    
                     CoverPageCarouselAPIView,
+                    CoverPageCarouselListView,
                     LatestArivalAPIView,
                     CategoryCreateAPIView,
+                    LatestArrivalListView,
                     ProductCategoryListAPIView,
                     ProductCreateAPIView,
                     ProductDeleteAPIView,
@@ -45,7 +47,10 @@ urlpatterns = [
 
 
     path('coverpage-carousel/add/', CoverPageCarouselAPIView.as_view()),
+    path('cover-page-carousels/', CoverPageCarouselListView.as_view()),
+
     path('latest-arrivals/add/', LatestArivalAPIView.as_view()),
+    path('latest-arrivals/', LatestArrivalListView.as_view()),
 
 ]
 
