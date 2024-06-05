@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ProductCategory, Product, Supercategory, Variation
+from .models import CoverPageCarousel, LatestArival, ProductCategory, Product, Supercategory, Variation
 
 
 
@@ -26,3 +26,13 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 class VariationAdmin(admin.ModelAdmin):
    list_display = ['id','product_variant', 'color','size', "stock_quantity"]
     
+
+@admin.register(LatestArival)
+class LatestArivalAdmin(admin.ModelAdmin):
+    class Meta:
+        list_diaplay = ['id','product']
+
+@admin.register(CoverPageCarousel)
+class LatestArivalAdmin(admin.ModelAdmin):
+    class Meta:
+        list_diaplay = ['id']
