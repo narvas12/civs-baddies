@@ -33,6 +33,6 @@ class LatestArivalAdmin(admin.ModelAdmin):
         list_diaplay = ['id','product']
 
 @admin.register(CoverPageCarousel)
-class LatestArivalAdmin(admin.ModelAdmin):
+class CoverPageCarouselAdmin(admin.ModelAdmin):
     class Meta:
         list_diaplay = ['id']
