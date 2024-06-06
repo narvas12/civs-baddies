@@ -88,7 +88,6 @@ MIDDLEWARE = [
     
 AUTHENTICATION_BACKENDS = [
     # `allauth` specific authentication methods, such as login by email
-    'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
