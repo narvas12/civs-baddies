@@ -1,3 +1,5 @@
+*.sqlite3
+
 # Environment files
 .env
 .env.local
@@ -30,7 +32,3 @@ README.md
 
 # Scratch files
 *.scratch
-
-
-# db.sqlite3
-models

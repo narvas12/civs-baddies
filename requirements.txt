@@ -76,6 +76,7 @@ MarkupSafe==2.1.5
 maxminddb==2.5.2
 msgpack==1.0.8
 multidict==6.0.5
+mysqlclient==2.2.4
 oauthlib==3.2.2
 packaging==23.2
 pillow==10.2.0

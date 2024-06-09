@@ -138,15 +138,14 @@ class ProductCategoryListAPIView(generics.ListAPIView):
 
 class VariationListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
-
-
-    queryset = Variation.objects.all()
     serializer_class = VariationSerializer
 
+    def get_queryset(self):
+        product_id = self.kwargs.get('product_id')
+        return Variation.objects.filter(product_variant_id=product_id)
+
     def create(self, request, *args, **kwargs):
-
         product_id = request.data.get('product_id')
-
         variations_data = request.data.get('variations', [])
 
         if not product_id or not variations_data:
@@ -155,7 +154,6 @@ class VariationListCreateAPIView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
@@ -163,7 +161,6 @@ class VariationListCreateAPIView(generics.ListCreateAPIView):
                 {"detail": "Product not found."},
                 status=status.HTTP_404_NOT_FOUND
             )
-
 
         variations = []
         for variation_data in variations_data:
@@ -178,19 +175,17 @@ class VariationListCreateAPIView(generics.ListCreateAPIView):
             status=status.HTTP_201_CREATED
         )
 
-
 class VariationListAPIView(generics.ListAPIView):
-    queryset = Variation.objects.all()
     serializer_class = VariationSerializer
-    filter_backends = [SearchFilter]
-    filterset_class = ProductFilter
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filterset_fields = ['product_variant']  # filterset_class is not required here
 
-
+    def get_queryset(self):
+        product_id = self.kwargs.get('product_id')
+        return Variation.objects.filter(product_variant_id=product_id)
 
 class VariationRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
-
-    
     queryset = Variation.objects.all()
     serializer_class = VariationSerializer
 

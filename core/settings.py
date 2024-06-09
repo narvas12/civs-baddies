@@ -6,6 +6,7 @@ from pathlib import Path
 import django
 import environ
 import cloudinary_storage
+from decouple import config
 
 import cloudinary
 import cloudinary.uploader
@@ -156,15 +157,14 @@ DATABASES = {
 
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'civsrxyr_manager',
-#         'USER': 'civsrxyr_admin',
-#         'PASSWORD': 'bKi8HZaCi0P5',
-#         'HOST': 'civsandbaddies.com',  # Set to 'localhost' if the database is hosted on the same machine
-#         'PORT': '5432',       # Default port for PostgreSQL
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': config('DB_NAME'),
+#         'USER': config('DB_USER'),
+#         'PASSWORD': config('DB_PASSWORD'),
+#         'HOST': config('DB_HOST', default='localhost'),
+#         'PORT': config('DB_PORT', default='3306'),
 #     }
 # }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -299,8 +299,8 @@ if not DEBUG:
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'dvc.africa@gmail.com' # Replace with your Gmail address
-EMAIL_HOST_PASSWORD = 'mfpkqcpawzmtrzpi' # Replace with your Gmail password or app password
+EMAIL_HOST_USER = config('EMAIL_HOST_USER') 
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 
 
@@ -318,10 +318,11 @@ EMAIL_USE_TLS = True
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dsmgwxyzi',
-    'API_KEY': '818626184762193',
-    'API_SECRET': 'vkvy1acRglD1laypnLQW2RCsBzs'
+    'CLOUD_NAME': config('CLOUD_NAME'),
+    'API_KEY': config('API_KEY'),
+    'API_SECRET': config('API_SECRET')
 }
+
 
 
 # CLOUDINARY_STORAGE = {

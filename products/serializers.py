@@ -167,14 +167,6 @@ class VariationSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
-    
-
-
-class VariationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Variation
-        fields = '__all__'
-
 
 
 class ProductDeleteSerializer(serializers.Serializer):
