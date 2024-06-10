@@ -14,8 +14,6 @@ from rest_framework.permissions import IsAuthenticated
 
 
 
-
-
 class ProductCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
