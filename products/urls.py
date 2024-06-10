@@ -26,7 +26,7 @@ from .views import (
 
 
 urlpatterns = [
-    path('products/create', ProductCreateAPIView.as_view()),
+    path('products/create/', ProductCreateAPIView.as_view()),
     path('product/<int:pk>/', ProductUpdateAPIView.as_view()),
 
     # path('add_products/', ProductListCreateAPIView.as_view()),

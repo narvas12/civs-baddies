@@ -11,16 +11,7 @@ from cloudinary.uploader import upload
 User = get_user_model()
 
 
-class ProductCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductCategory
-        fields = '__all__'
 
-class SupercategorySerializer(serializers.ModelSerializer):
-    category = ProductCategorySerializer()
-    class Meta:
-        model = Supercategory
-        fields = ['name', 'category']
 
 
 
