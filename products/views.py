@@ -9,7 +9,7 @@ from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, V
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, SupercategorySerializer, VariationSerializer 
+from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, SupercategoryCreateSerializer, SupercategorySerializer, VariationSerializer 
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -98,7 +98,7 @@ class ProductDeleteAPIView(APIView):
 class SuperCategoryCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
-    serializer_class = SupercategorySerializer
+    serializer_class = SupercategoryCreateSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

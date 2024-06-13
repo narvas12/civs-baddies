@@ -17,6 +17,13 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         model = ProductCategory
         fields = '__all__'
 
+
+class SupercategoryCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supercategory
+        fields = ['name']
+
+
 class SupercategorySerializer(serializers.ModelSerializer):
     category = ProductCategorySerializer()
     class Meta:
