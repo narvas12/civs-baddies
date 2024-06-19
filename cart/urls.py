@@ -13,7 +13,8 @@ from cart.views import (
     PublicWishlistView,
     RemoveFromCartView,
     UpdateCartItemQuantityView,
-    WishlistView
+    WishlistView,
+    SessionId,
     
 )
 
@@ -31,4 +32,5 @@ urlpatterns = [
     path('wishlist/<str:customer_id>/', WishlistView.as_view()),
 
     path('wishlist/<str:unique_identifier>/', PublicWishlistView.as_view()),
+    path('session_id/', SessionId.as_view()),
 ]

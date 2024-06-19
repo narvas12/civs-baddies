@@ -1,4 +1,5 @@
 import uuid
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework import status
@@ -9,6 +10,7 @@ from users.models import CustomUser
 from .serializers import CartItemSerializer, WishlistItemSerializer
 from .utils import add_to_session_cart
 from rest_framework.permissions import  AllowAny
+
 
 
 
@@ -42,8 +44,14 @@ class AddToCartView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             cart_item = add_to_session_cart(request, product_id, quantity)
-            return Response(cart_item, status=status.HTTP_201_CREATED)
-        
+            return Response({'session_id': request.session.session_key, 'cart_item': cart_item}, status=status.HTTP_201_CREATED)
+
+
+
+class SessionId(APIView):
+    def get(self, request):
+        session_id = request.session.session_key
+        return JsonResponse({'session_id': session_id})
 
 
 
