@@ -58,9 +58,10 @@ class SessionId(APIView):
 class UpdateCartItemQuantityView(APIView):
     permission_classes = [AllowAny]
 
-    def patch(self, request, customer_id=None, item_id=None):
+    def patch(self, request, item_id=None):
         user = request.user
         new_quantity = request.data.get('quantity')
+        session_id = request.data.get('session_id')
 
         if not new_quantity or int(new_quantity) <= 0:
             return Response({'error': 'Invalid quantity provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -77,28 +78,64 @@ class UpdateCartItemQuantityView(APIView):
             serializer = CartItemSerializer(cart_item)
             return Response(serializer.data)
         else:
-            session_cart = request.session.get('cart', [])
+            if not session_id:
+                return Response({'error': 'Session ID is required for unauthenticated users'}, status=status.HTTP_400_BAD_REQUEST)
+            session_cart = request.session.get(session_id, [])
             for item in session_cart:
                 if item['product_id'] == item_id:
                     item['quantity'] = int(new_quantity)
-                    request.session['cart'] = session_cart
+                    request.session[session_id] = session_cart
                     return Response(item, status=status.HTTP_200_OK)
             return Response({'error': 'Cart item not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+# class UpdateCartItemQuantityView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def patch(self, request, customer_id=None, item_id=None):
+#         user = request.user
+#         new_quantity = request.data.get('quantity')
+
+#         if not new_quantity or int(new_quantity) <= 0:
+#             return Response({'error': 'Invalid quantity provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if user.is_authenticated:
+#             try:
+#                 cart_item = CartItem.objects.get(user=user, pk=item_id)
+#             except CartItem.DoesNotExist:
+#                 return Response({'error': 'Cart item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+#             cart_item.quantity = int(new_quantity)
+#             cart_item.clean_fields()  
+#             cart_item.save()
+#             serializer = CartItemSerializer(cart_item)
+#             return Response(serializer.data)
+#         else:
+#             session_cart = request.session.get('cart', [])
+#             for item in session_cart:
+#                 if item['product_id'] == item_id:
+#                     item['quantity'] = int(new_quantity)
+#                     request.session['cart'] = session_cart
+#                     return Response(item, status=status.HTTP_200_OK)
+#             return Response({'error': 'Cart item not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 
 class CartItemListView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, customer_id=None):
+    def get(self, request):
         user = request.user
+        session_id = request.query_params.get('session_id')
 
         if user.is_authenticated:
             cart_items = CartItem.objects.filter(user=user, active=True)
             serializer = CartItemSerializer(cart_items, many=True)
             return Response(serializer.data)
         else:
-            session_cart = request.session.get('cart', [])
+            if not session_id:
+                return Response({'error': 'Session ID is required for unauthenticated users'}, status=status.HTTP_400_BAD_REQUEST)
+            session_cart = request.session.get(session_id, [])
             session_cart_items = []
             for item in session_cart:
                 try:
@@ -117,6 +154,36 @@ class CartItemListView(APIView):
             return Response(session_cart_items, status=status.HTTP_200_OK)
         
 
+# class CartItemListView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, customer_id=None):
+#         user = request.user
+
+#         if user.is_authenticated:
+#             cart_items = CartItem.objects.filter(user=user, active=True)
+#             serializer = CartItemSerializer(cart_items, many=True)
+#             return Response(serializer.data)
+#         else:
+#             session_cart = request.session.get('cart', [])
+#             session_cart_items = []
+#             for item in session_cart:
+#                 try:
+#                     product = Product.objects.get(pk=item['product_id'])
+#                     session_cart_items.append({
+#                         'product': {
+#                             'id': product.id,
+#                             'name': product.name,
+#                             'price': product.price
+#                         },
+#                         'quantity': item['quantity'],
+#                         'active': True
+#                     })
+#                 except Product.DoesNotExist:
+#                     continue
+#             return Response(session_cart_items, status=status.HTTP_200_OK)
+        
+
 
 
 
@@ -125,6 +192,7 @@ class RemoveFromCartView(APIView):
 
     def delete(self, request, pk, format=None):
         user = request.user
+        session_id = request.data.get('session_id')
 
         if user.is_authenticated:
             try:
@@ -136,13 +204,40 @@ class RemoveFromCartView(APIView):
             cart_item.delete()
             return Response({'success': 'Removed from cart'}, status=status.HTTP_204_NO_CONTENT)
         else:
-            session_cart = request.session.get('cart', [])
+            if not session_id:
+                return Response({'error': 'Session ID is required for unauthenticated users'}, status=status.HTTP_400_BAD_REQUEST)
+            session_cart = request.session.get(session_id, [])
             for item in session_cart:
                 if item['product_id'] == pk:
                     session_cart.remove(item)
-                    request.session['cart'] = session_cart
+                    request.session[session_id] = session_cart
                     return Response({'success': 'Removed from cart'}, status=status.HTTP_204_NO_CONTENT)
             return Response({'error': 'Cart item not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+
+# class RemoveFromCartView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def delete(self, request, pk, format=None):
+#         user = request.user
+
+#         if user.is_authenticated:
+#             try:
+#                 cart_item = CartItem.objects.get(pk=pk)
+#             except CartItem.DoesNotExist:
+#                 return Response(status=status.HTTP_404_NOT_FOUND)
+            
+#             cart_item.active = False
+#             cart_item.delete()
+#             return Response({'success': 'Removed from cart'}, status=status.HTTP_204_NO_CONTENT)
+#         else:
+#             session_cart = request.session.get('cart', [])
+#             for item in session_cart:
+#                 if item['product_id'] == pk:
+#                     session_cart.remove(item)
+#                     request.session['cart'] = session_cart
+#                     return Response({'success': 'Removed from cart'}, status=status.HTTP_204_NO_CONTENT)
+#             return Response({'error': 'Cart item not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 

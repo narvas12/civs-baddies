@@ -1,7 +1,7 @@
 from django.urls import path
 from .background_job import start_background_tasks
 
-
+# Uncomment this line to start background tasks if needed
 # start_background_tasks()
 
 from cart.views import (
@@ -9,28 +9,23 @@ from cart.views import (
     AddToWishlistView,
     AddWishlistToCartView, 
     CartItemListView,
-    # DeleteCartItems,
     PublicWishlistView,
     RemoveFromCartView,
     UpdateCartItemQuantityView,
     WishlistView,
     SessionId,
-    
 )
 
-
-
 urlpatterns = [
-    path('add-to-cart/', AddToCartView.as_view()),
-    path('cart-items/<str:customer_id>/', CartItemListView.as_view()),
-    path('cart-items/<int:pk>/remove/', RemoveFromCartView.as_view()),
-    path('cart_items/<str:customer_id>/update-quantity/<int:item_id>/', UpdateCartItemQuantityView.as_view()),
-
-    # path('delete_cart/', DeleteCartItems.as_view()),
-    path('wishlist/add/', AddToWishlistView.as_view()),
-    path('wishlist/add-to-cart/', AddWishlistToCartView.as_view()),
-    path('wishlist/<str:customer_id>/', WishlistView.as_view()),
-
-    path('wishlist/<str:unique_identifier>/', PublicWishlistView.as_view()),
-    path('session_id/', SessionId.as_view()),
+    path('add-to-cart/', AddToCartView.as_view(), name='add_to_cart'),
+    path('cart-items/', CartItemListView.as_view(), name='cart_items'),
+    path('cart-items/<int:pk>/remove/', RemoveFromCartView.as_view(), name='remove_from_cart'),
+    path('cart-items/update-quantity/<int:item_id>/', UpdateCartItemQuantityView.as_view(), name='update_cart_item_quantity'),
+    
+    path('wishlist/add/', AddToWishlistView.as_view(), name='add_to_wishlist'),
+    path('wishlist/add-to-cart/', AddWishlistToCartView.as_view(), name='add_wishlist_to_cart'),
+    path('wishlist/', WishlistView.as_view(), name='wishlist'),
+    path('wishlist/public/<str:unique_identifier>/', PublicWishlistView.as_view(), name='public_wishlist'),
+    
+    path('session-id/', SessionId.as_view(), name='session_id'),
 ]
