@@ -14,6 +14,19 @@ from rest_framework.permissions import  AllowAny
 
 
 
+class SessionCartItemListView(APIView):
+    def get(self, request, *args, **kwargs):
+        session_id = request.GET.get('session_id')
+        if not session_id:
+            return Response({"error": "Session ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        cart_items = CartItem.objects.filter(session_id=session_id, active=True)
+        serializer = CartItemSerializer(cart_items, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
 
 class AddToCartView(APIView):
     permission_classes = [AllowAny]
