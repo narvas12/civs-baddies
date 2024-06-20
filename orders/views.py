@@ -15,59 +15,25 @@ from users.models import Address
 from cart.models import CartItem
 from django.contrib.auth import get_user_model
 from core import settings
-from django.db import transaction
 
 
 
-# Create order using session id from client
-class CreateOrderFromCartView(APIView):
+
+class OrderCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        session_id = request.data.get('session_id')
-        shipping_address_id = request.data.get('shipping_address_id')
-        billing_address_id = request.data.get('billing_address_id')
-
-        if not session_id or not shipping_address_id or not billing_address_id:
-            return Response({"error": "Session ID, shipping address ID, and billing address ID are required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        shipping_address = get_object_or_404(Address, id=shipping_address_id)
-        billing_address = get_object_or_404(Address, id=billing_address_id)
-        
-        cart_items = CartItem.objects.filter(session_id=session_id, active=True)
-        if not cart_items.exists():
-            return Response({"error": "No active cart items found for the given session ID."}, status=status.HTTP_400_BAD_REQUEST)
-
-        with transaction.atomic():
-            order = Order.create_order(buyer=user, address=shipping_address)
-            order.billing_address = billing_address
-            order.save()
-
-            for item in cart_items:
-                OrderItem.create_order_item(order=order, product=item.product, quantity=item.quantity).save()
-                item.active = False
-                item.save()
-
-        return Response({"order_id": order.id, "order_number": order.order_number}, status=status.HTTP_201_CREATED)
-
-
-
-# Create order using customer id 
-class OrderCreateAPIView(APIView):
-    # permission_classes = [IsAuthenticated]
-
     def post(self, request, format=None):
-        customer_id = request.data.get('customer_id')
+        # customer_id = request.data.get('customer_id')
 
-        if not customer_id:
-            return Response({"message": "Customer ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        # if not customer_id:
+        #     return Response({"message": "Customer ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            user = get_user_model().objects.get(customer_id=customer_id)
-        except get_user_model().DoesNotExist:
-            return Response({"message": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
-
+        # try:
+        #     user = request.user
+        # except get_user_model().DoesNotExist:
+        #     return Response({"message": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = request.user
         cart_items = CartItem.objects.filter(user=user)
 
         if not cart_items.exists():
