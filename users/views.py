@@ -328,7 +328,7 @@ class BillingAddressDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         user = self.request.user
-        queryset = Address.objects.filter(user=user, address_type=Address.BILLING)
+        queryset = Address.objects.filter(user=user, address_type=Address.BILLING).order_by('-id')
         return get_object_or_404(queryset)
 
 
@@ -337,8 +337,8 @@ class ShippingAddressDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         user = self.request.user
-        queryset = Address.objects.filter(user=user, address_type=Address.SHIPPING)
-        return get_object_or_404(queryset)
+        queryset = Address.objects.filter(user=user, address_type=Address.SHIPPING).order_by('-id')
+        return queryset.first()
 
     
 
