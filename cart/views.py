@@ -21,13 +21,13 @@ class AddToCartView(APIView):
 
     def post(self, request):
         user = request.user
-        items = request.data.get('items', [])
+        items = request.data
         
         if not user.is_authenticated:
             return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
         
-        if not items:
-            return Response({'error': 'Items array is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(items, list) or not items:
+            return Response({'error': 'A non-empty items array is required'}, status=status.HTTP_400_BAD_REQUEST)
         
         added_items = []
 
