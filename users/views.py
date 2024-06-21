@@ -298,9 +298,8 @@ class CustomerProfileListAPIView(APIView):
 class AddressCreateView(CreateAPIView):
     serializer_class = AddressSerializer
 
-    def get_queryset(self, user=None):
-        user = self.request.user
-        return Address.objects.filter(user=user)
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
