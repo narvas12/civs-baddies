@@ -232,7 +232,20 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
-        fields = "__all__"
+        fields = [
+            'id',
+            'user',  # This might be omitted if not needed for serialization, as user can be inferred from the request context
+            'address_type',
+            'default',
+            'country',
+            'city',
+            'street_address',
+            'apartment_address',
+            'postal_code',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['user', 'created_at', 'updated_at']
         
 
 class AdminProfileSerializer(serializers.ModelSerializer):
