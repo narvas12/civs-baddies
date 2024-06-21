@@ -52,8 +52,8 @@ urlpatterns = [
     path('customer-profile-details/<str:pk>/', CustomerProfileAPIView.as_view()),
     path('user-update/<uuid:user_id>/', UserUpdateView.as_view(), name='user-update'),
 
-    path('addresses/', AddressCreateView.as_view(), name='address-create'),
-    path('addresses/<int:pk>/', AddressUpdateView.as_view(), name='address-update'),
+    path('addresses/create/', AddressCreateView.as_view(), name='address-create'),
+    path('addresses/update/<int:pk>/', AddressUpdateView.as_view(), name='address-update'),
     path('billing_address_details/', BillingAddressDetailAPIView.as_view(), name='billing-address-detail'),
     path('shipping_address_details/', ShippingAddressDetailAPIView.as_view(), name='shipping-address-detail'),
     
