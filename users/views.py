@@ -295,25 +295,23 @@ class CustomerProfileListAPIView(APIView):
         serialized_customers = CustomUserSerializer(customers, many=True)
         return Response(serialized_customers.data)
 
-
 class AddressCreateView(CreateAPIView):
     serializer_class = AddressSerializer
 
     def get_queryset(self):
-        customer_id = self.kwargs['customer_id']
-        if customer_id != self.request.user.customer_id:
-            raise NotFound('You can only create addresses for yourself')
-        return Address.objects.filter(user__customer_id=customer_id)
+        user = self.request.user
+        return Address.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class AddressUpdateView(UpdateAPIView):
     serializer_class = AddressSerializer
 
     def get_queryset(self):
-        customer_id = self.kwargs['customer_id']
-        if customer_id != self.request.user.customer_id:
-            raise NotFound('You can only update your own addresses')
-        return Address.objects.filter(user__customer_id=customer_id)
+        user = self.request.user
+        return Address.objects.filter(user=user)
 
     def get_object(self):
         queryset = self.get_queryset()
@@ -328,8 +326,8 @@ class BillingAddressDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AddressSerializer
 
     def get_object(self):
-        customer_id = self.kwargs.get('customer_id')
-        queryset = Address.objects.filter(user__customer_id=customer_id, address_type=Address.BILLING)
+        user = self.request.user
+        queryset = Address.objects.filter(user=user, address_type=Address.BILLING)
         return get_object_or_404(queryset)
 
 
@@ -337,8 +335,8 @@ class ShippingAddressDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AddressSerializer
 
     def get_object(self):
-        customer_id = self.kwargs.get('customer_id')
-        queryset = Address.objects.filter(user__customer_id=customer_id, address_type=Address.SHIPPING)
+        user = self.request.user
+        queryset = Address.objects.filter(user=user, address_type=Address.SHIPPING)
         return get_object_or_404(queryset)
 
     

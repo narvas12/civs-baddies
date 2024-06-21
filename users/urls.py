@@ -52,10 +52,10 @@ urlpatterns = [
     path('customer-profile-details/<str:pk>/', CustomerProfileAPIView.as_view()),
     path('user-update/<uuid:user_id>/', UserUpdateView.as_view(), name='user-update'),
 
-    path('addresses/<str:customer_id>/', AddressCreateView.as_view()),
-    path('addresses/<str:customer_id>/<int:pk>/', AddressUpdateView.as_view()),
-    path('billing_address_details/<str:customer_id>/', BillingAddressDetailAPIView.as_view()),
-    path('shipping_address_details/<str:customer_id>/', ShippingAddressDetailAPIView.as_view()),
+    path('addresses/', AddressCreateView.as_view(), name='address-create'),
+    path('addresses/<int:pk>/', AddressUpdateView.as_view(), name='address-update'),
+    path('billing_address_details/', BillingAddressDetailAPIView.as_view(), name='billing-address-detail'),
+    path('shipping_address_details/', ShippingAddressDetailAPIView.as_view(), name='shipping-address-detail'),
     
     path('customer_profiles/', CustomerProfileListAPIView.as_view(), name='customer_profiles'),
     path('delete_all_profiles/', DeleteAllProfilesAPIView.as_view(), name='delete_all_profiles'),
