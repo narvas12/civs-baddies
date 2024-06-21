@@ -71,19 +71,42 @@ class RemoveFromCartView(APIView):
 
 
 class CartItemListView(APIView):
-    def get(self, request, customer_id):  
-        try:
-            user = CustomUser.objects.get(customer_id=customer_id)  
-        except CustomUser.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        user = request.user
         cart_items = CartItem.objects.filter(user=user, active=True)
         serializer = CartItemSerializer(cart_items, many=True)
         return Response(serializer.data)
 
-    def post(self, request, customer_id):  
+    def post(self, request):
         add_to_cart_view = AddToCartView.as_view()
         return add_to_cart_view(request)
+
+
+
+class UpdateCartItemQuantityView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, item_id):
+        user = request.user
+
+        try:
+            cart_item = CartItem.objects.get(user=user, pk=item_id)
+        except CartItem.DoesNotExist:
+            return Response({'error': 'Cart item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_quantity = request.data.get('quantity')
+        if not new_quantity or new_quantity <= 0:
+            return Response({'error': 'Invalid quantity provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart_item.quantity = new_quantity
+        cart_item.clean_fields()  # Validate the field values
+        cart_item.save()
+
+        serializer = CartItemSerializer(cart_item)
+        return Response(serializer.data)
+
 
 
 class DeleteCartItems(APIView):
@@ -95,33 +118,8 @@ class DeleteCartItems(APIView):
         cart_items.delete()
         
         return Response({'message': 'All cart items deleted successfully'}, status=204)
-
-
-
-class UpdateCartItemQuantityView(APIView):
-    def patch(self, request, customer_id, item_id):
-        try:
-            user = CustomUser.objects.get(customer_id=customer_id)
-            cart_item = CartItem.objects.get(user=user, pk=item_id)
-        except CustomUser.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        except CartItem.DoesNotExist:
-            return Response({'error': 'Cart item not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        new_quantity = request.data.get('quantity')
-        if not new_quantity or new_quantity <= 0:
-            return Response({'error': 'Invalid quantity provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-        cart_item.quantity = new_quantity
-        cart_item.clean_fields()  
-        cart_item.save()
-
-        serializer = CartItemSerializer(cart_item)
-        return Response(serializer.data)
-
-
-
     
+
 
 class AddToWishlistView(APIView):
     def post(self, request):
