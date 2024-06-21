@@ -29,7 +29,6 @@ from .serializers import (
     LoginSerializer,
     LogoutUserSerializer,
     AdminProfileSerializer,
-    # ShippingAddressSerializer,
     GetAllUserSerializer,
     UserUpdateSerializer,
 )
@@ -295,10 +294,11 @@ class CustomerProfileListAPIView(APIView):
         serialized_customers = CustomUserSerializer(customers, many=True)
         return Response(serialized_customers.data)
 
+
 class AddressCreateView(CreateAPIView):
     serializer_class = AddressSerializer
 
-    def get_queryset(self):
+    def get_queryset(self, user=None):
         user = self.request.user
         return Address.objects.filter(user=user)
 

@@ -230,19 +230,10 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
 
 class AddressSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    class Meta:
-        model = Address
-        fields = '__all__'  # Include all fields
-
-    def validate(self, data):
-        return data
-
-class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = "__all__"
+        
 
 class AdminProfileSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField(
