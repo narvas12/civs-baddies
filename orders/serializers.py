@@ -6,11 +6,10 @@ from .models import Order, OrderItem
 
 class OrderSerializer(serializers.ModelSerializer):
     shipping_address = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), required=True)
-    billing_address = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), required=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'buyer', 'order_number', 'status', 'is_paid', 'shipping_address', 'billing_address']
+        fields = ['id', 'buyer', 'order_number', 'status', 'is_paid', 'shipping_address',]
         read_only_fields = ['id', 'order_number', 'status', 'is_paid']
 
 

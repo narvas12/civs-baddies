@@ -18,7 +18,6 @@ from core import settings
 
 
 
-
 class OrderCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -32,27 +31,20 @@ class OrderCreateAPIView(APIView):
         total_cost = sum(item.total_price for item in cart_items)
 
         shipping_address_id = request.data.get('shipping_address_id')
-        billing_address_id = request.data.get('billing_address_id')
 
         try:
             if shipping_address_id:
                 shipping_address = Address.objects.get(pk=shipping_address_id, user=user, address_type=Address.SHIPPING)
             else:
                 shipping_address = Address.objects.filter(user=user, address_type=Address.SHIPPING).latest('created_at')
-                
-            if billing_address_id:
-                billing_address = Address.objects.get(pk=billing_address_id, user=user, address_type=Address.BILLING)
-            else:
-                billing_address = Address.objects.filter(user=user, address_type=Address.BILLING).latest('created_at')
         except Address.DoesNotExist:
-            return Response({"message": "Invalid shipping or billing address ID, or default addresses not found."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Invalid shipping address ID, or default address not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         order_data = {
             'buyer': user.id,
             'status': Order.PENDING,
             'is_paid': False,
             'shipping_address': shipping_address.pk,
-            'billing_address': billing_address.pk,
             'payment_reference': str(uuid.uuid4())
         }
 
@@ -75,6 +67,7 @@ class OrderCreateAPIView(APIView):
                     'image_url': cart_item.product.image
                 })
 
+            # Optionally clear the cart after order creation
             # cart_items.delete()
 
             send_order_confirmation_email(
@@ -95,8 +88,6 @@ class OrderCreateAPIView(APIView):
             return Response({'order': order_serializer.data, 'payment': payment_data})
 
         return Response(order_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 class PaymentView(APIView):

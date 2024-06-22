@@ -28,7 +28,6 @@ class Order(models.Model):
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
     is_paid = models.BooleanField(default=False)
     shipping_address = models.ForeignKey(Address, related_name="shipping_orders", on_delete=models.SET_NULL, null=True)
-    billing_address = models.ForeignKey(Address, related_name="billing_orders", on_delete=models.SET_NULL,  null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     objects = OrderManager()
