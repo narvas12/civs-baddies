@@ -5,10 +5,9 @@ from django.core.mail import send_mail
 
 
 def send_order_confirmation_email(user, order_instance, products, order_number, total):
-    # Define email subject
     subject = 'Order Confirmation'
 
-    # Render email template with necessary data
+
     email_content = render_to_string('order_confirmation_email.html', {
         'user': user,
         'order_instance': order_instance,
@@ -16,9 +15,24 @@ def send_order_confirmation_email(user, order_instance, products, order_number, 
         'order_number': order_number,
         'total': total
     })
+    send_mail(subject, None, [user.email], [user.email], html_message=email_content)
 
-    # Send email with HTML content
-    send_mail(subject, None, 'your@example.com', [user.email], html_message=email_content)
+
+# def send_order_confirmation_email(user, order_instance, products, order_number, total):
+#     # Define email subject
+#     subject = 'Order Confirmation'
+
+#     # Render email template with necessary data
+#     email_content = render_to_string('order_confirmation_email.html', {
+#         'user': user,
+#         'order_instance': order_instance,
+#         'products': products,
+#         'order_number': order_number,
+#         'total': total
+#     })
+
+#     # Send email with HTML content
+#     send_mail(subject, None, 'your@example.com', [user.email], html_message=email_content)
 
 
 

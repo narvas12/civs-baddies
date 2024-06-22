@@ -234,7 +234,6 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address
         fields = [
             'id',
-            'user', 
             'address_type',
             'default',
             'country',

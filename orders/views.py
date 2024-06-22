@@ -23,16 +23,6 @@ class OrderCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        # customer_id = request.data.get('customer_id')
-
-        # if not customer_id:
-        #     return Response({"message": "Customer ID is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # try:
-        #     user = request.user
-        # except get_user_model().DoesNotExist:
-        #     return Response({"message": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
-        
         user = request.user
         cart_items = CartItem.objects.filter(user=user)
 
@@ -41,11 +31,21 @@ class OrderCreateAPIView(APIView):
 
         total_cost = sum(item.total_price for item in cart_items)
 
+        shipping_address_id = request.data.get('shipping_address_id')
+        billing_address_id = request.data.get('billing_address_id')
+
         try:
-            shipping_address = Address.objects.get(user=user, address_type=Address.SHIPPING)
-            billing_address = Address.objects.get(user=user, address_type=Address.BILLING)
+            if shipping_address_id:
+                shipping_address = Address.objects.get(pk=shipping_address_id, user=user, address_type=Address.SHIPPING)
+            else:
+                shipping_address = Address.objects.filter(user=user, address_type=Address.SHIPPING).latest('created_at')
+                
+            if billing_address_id:
+                billing_address = Address.objects.get(pk=billing_address_id, user=user, address_type=Address.BILLING)
+            else:
+                billing_address = Address.objects.filter(user=user, address_type=Address.BILLING).latest('created_at')
         except Address.DoesNotExist:
-            return Response({"message": "Default shipping or billing address not found."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Invalid shipping or billing address ID, or default addresses not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         order_data = {
             'buyer': user.id,
@@ -53,7 +53,7 @@ class OrderCreateAPIView(APIView):
             'is_paid': False,
             'shipping_address': shipping_address.pk,
             'billing_address': billing_address.pk,
-            'payment_reference': str(uuid.uuid4())  
+            'payment_reference': str(uuid.uuid4())
         }
 
         order_serializer = OrderSerializer(data=order_data)
@@ -81,8 +81,8 @@ class OrderCreateAPIView(APIView):
                 user=user,
                 order_instance=order_instance,
                 products=products,
-                order_number=order_instance.order_number,  
-                total=total_cost  
+                order_number=order_instance.order_number,
+                total=total_cost
             )
 
             payment_data = {
@@ -92,7 +92,9 @@ class OrderCreateAPIView(APIView):
                 'reference': order_data['payment_reference']
             }
 
-            return Response({'order': order_serializer.data, 'payment':payment_data})
+            return Response({'order': order_serializer.data, 'payment': payment_data})
+
+        return Response(order_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
