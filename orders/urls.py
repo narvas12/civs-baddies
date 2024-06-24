@@ -4,6 +4,7 @@ from orders.views import (
     OrderCreateAPIView,
     # PaystackWebhook,
     TrendingProducts,
+    UserOrdersView,
     # Payment
     
 )
@@ -13,5 +14,6 @@ urlpatterns = [
     # path('pay-for-order/', PaystackWebhook.as_view()),
     path('trending-products/', TrendingProducts.as_view()),
     # path("payment/", Payment),
+    path('my_orders/', UserOrdersView().as_view())
 ]
 

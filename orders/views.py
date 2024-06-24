@@ -15,6 +15,8 @@ from users.models import Address
 from cart.models import CartItem
 from django.contrib.auth import get_user_model
 from core import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import DatabaseError
 
 
 
@@ -67,8 +69,7 @@ class OrderCreateAPIView(APIView):
                     'image_url': cart_item.product.image
                 })
 
-            # Optionally clear the cart after order creation
-            # cart_items.delete()
+            cart_items.delete()
 
             send_order_confirmation_email(
                 user=user,
@@ -172,6 +173,30 @@ class PaymentCallbackView(APIView):
         except Exception as e:
             return Response({'error': 'An unexpected error occured'},  status=status.HTTP_400_BAD_REQUEST)
 
+
+class UserOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        try:
+            orders_data = Order.objects.get_user_orders_with_items(user)
+            return Response(orders_data, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response(
+                {"error": "Orders not found for the user"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except DatabaseError:
+            return Response(
+                {"error": "Database error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class TrendingProducts(APIView):

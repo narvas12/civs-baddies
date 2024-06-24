@@ -44,7 +44,7 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
 
         random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-        random_part_formatted = f"{random_part[:4]}-{random_part[4:]}-{random_part[4:]}"
+        random_part_formatted = f"{random_part[:4]}-{random_part[4:]}"
 
 
         self.order_number = f"{self.buyer.customer_id}-{random_part_formatted}"
