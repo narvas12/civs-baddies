@@ -199,6 +199,19 @@ class UserOrdersView(APIView):
             )
 
 
+class OrderDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, order_id):
+        try:
+            order_data = Order.objects.get_order_details(user=request.user, order_id=order_id)
+            return Response(order_data, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
 class TrendingProducts(APIView):
     def get(self, request, format=None):
         manager = Order.objects

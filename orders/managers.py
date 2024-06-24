@@ -4,6 +4,7 @@ from django.db.models import Count
 from django.db import models
 from datetime import datetime, timedelta
 from django.db.models import Prefetch
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class OrderManager(models.Manager):
@@ -64,3 +65,51 @@ class OrderManager(models.Manager):
             order_list.append(order_data)
 
         return order_list
+    
+    def get_order_details(self, user, order_id):
+        try:
+            order = self.prefetch_related('orderitems__product').get(id=order_id, buyer=user)
+            order_items = order.orderitems.all()
+
+            order_data = {
+                'id': order.id,
+                'buyer': order.buyer.id,
+                'order_number': order.order_number,
+                'status': order.status,
+                'is_paid': order.is_paid,
+                'shipping_address': order.shipping_address.id,
+                'created_at': order.created_at,
+                'orderitems': []
+            }
+
+            total_amount = Decimal(0)
+            discount = Decimal(0)
+            tax_rate = Decimal(0.10)  # Assuming a flat tax rate of 10%
+
+            for item in order_items:
+                product = item.product
+                item_data = {
+                    'product': product.id,
+                    'name': product.name,
+                    'image': product.image.url if product.image else None,
+                    'price': product.price,
+                    'quantity': item.quantity,
+                    'total': item.total
+                }
+                order_data['orderitems'].append(item_data)
+
+                total_amount += item.total
+                if product.discounted_percentage:
+                    discount += (product.discounted_percentage / 100) * item.quantity * product.price
+
+            tax = total_amount * tax_rate
+
+            order_data['total_amount'] = total_amount
+            order_data['discount'] = discount
+            order_data['tax'] = tax
+
+            return order_data
+        except ObjectDoesNotExist:
+            raise ObjectDoesNotExist("Order not found")
+        except Exception as e:
+            raise Exception(f"An unexpected error occurred: {str(e)}")
