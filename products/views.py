@@ -16,7 +16,6 @@ from rest_framework.permissions import IsAuthenticated
 
 class ProductCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
@@ -25,6 +24,8 @@ class ProductCreateAPIView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Product created successfully'}, status=status.HTTP_201_CREATED)
+
+
     
 
 class ProductUpdateAPIView(generics.UpdateAPIView):
