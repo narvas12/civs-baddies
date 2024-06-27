@@ -67,7 +67,7 @@ class LatestArival(models.Model):
 
 
 class Variation(models.Model):
-    product_variant = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_variant = models.ForeignKey(Product, related_name='variations', on_delete=models.CASCADE, null=True, blank=True)
     size = models.CharField(max_length=100, null=True, blank=True)
     color = models.CharField(max_length=100, null=True, blank=True)
     price = models.DecimalField(max_digits=20, decimal_places=2, default=0)

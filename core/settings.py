@@ -171,13 +171,6 @@ DATABASES = {
 }
 
 
-# username = doadmin
-# password = ************************ show
-# host = db-postgresql-nyc3-43674-do-user-16726700-0.c.db.ondigitalocean.com
-# port = 25060
-# database = defaultdb
-# sslmode = require
-
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 

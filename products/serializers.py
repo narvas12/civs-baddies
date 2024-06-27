@@ -49,12 +49,16 @@ class VariationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Variation
         fields = '__all__'
+        extra_kwargs = {
+            'product_variant': {'required': False},
+        }
 
     def create(self, validated_data):
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
+    
 
 class ProductSerializer(serializers.ModelSerializer):
     variations = VariationSerializer(many=True, required=False)
@@ -84,6 +88,7 @@ class ProductSerializer(serializers.ModelSerializer):
             Variation.objects.create(**variation_data)
 
         return product
+    
 
     def generate_unique_slug(self, name, product_tag):
         cleaned_name = name.replace("'", "")
@@ -97,6 +102,7 @@ class ProductSerializer(serializers.ModelSerializer):
             counter += 1
         
         return slug
+    
 
     def upload_image(self, image):
         cloudinary.config(
