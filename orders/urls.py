@@ -3,6 +3,8 @@ from django.urls import path
 from orders.views import (
     OrderCreateAPIView,
     OrderDetailView,
+    OrderItemsListView,
+    OrderListView,
     # PaystackWebhook,
     TrendingProducts,
     UserOrdersView,
@@ -16,6 +18,9 @@ urlpatterns = [
     path('trending-products/', TrendingProducts.as_view()),
     # path("payment/", Payment),
     path('my_orders/', UserOrdersView().as_view()),
-    path('my_order/detail/<int:order_id>/', OrderDetailView.as_view(), name='order-detail'),
+    path('my_order/detail/<int:order_id>/', OrderDetailView.as_view()),
+
+    path('orders/', OrderListView.as_view()),
+    path('orders/<int:order_id>/items/', OrderItemsListView.as_view()),
 ]
 

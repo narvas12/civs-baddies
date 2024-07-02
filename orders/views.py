@@ -2,9 +2,9 @@ import time
 import uuid
 from django.shortcuts import get_object_or_404, render
 import requests
-from rest_framework.views import APIView
+from rest_framework.views import APIView, ListAPIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.permissions import IsAuthenticated
 from notifications.utils import send_order_confirmation_email
 from orders.managers import OrderManager
@@ -199,6 +199,14 @@ class UserOrdersView(APIView):
             )
 
 
+# class OrderDetailView(generics.RetrieveAPIView):
+#     serializer_class = OrderSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         return Order.objects.filter(buyer=self.request.user)
+    
+
 class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -210,7 +218,24 @@ class OrderDetailView(APIView):
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
+
+class OrderListView(ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(buyer=self.request.user)      
+
+
+class OrderItemsListView(generics.ListAPIView):
+    serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        order_id = self.kwargs['order_id']
+        return OrderItem.objects.filter(order__id=order_id, order__buyer=self.request.user)
+    
 
 class TrendingProducts(APIView):
     def get(self, request, format=None):
