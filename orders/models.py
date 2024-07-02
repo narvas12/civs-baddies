@@ -39,7 +39,8 @@ class Order(models.Model):
     def total_cost(self):
         items = self.orderitems.all()
 
-        
+    def get_full_name(self):
+        return f"{self.buyer.first_name} {self.buyer.last_name}"
 
     def save(self, *args, **kwargs):
 
