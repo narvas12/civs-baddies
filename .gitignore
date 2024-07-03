@@ -1,5 +1,4 @@
 db.sqlite3
-
 # Environment files
 .env
 .env.local
@@ -12,7 +11,7 @@ civs_env
 
 # Build files
 *.pyc
-__pycache__/
+__pycache__
 
 # Test files, if applicable
 *.pyd

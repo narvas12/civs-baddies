@@ -223,10 +223,10 @@ class OrderDetailView(APIView):
 
 class OrderListView(ListAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Order.objects.filter(buyer=self.request.user)      
+        return Order.objects.all()    
 
 
 class OrderItemsListView(ListAPIView):
