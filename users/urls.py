@@ -10,7 +10,7 @@ from users.views import (
     ChangePasswordAPIView,
     CreateAdminAPIView,
     LockAdminUserAPIView,
-    LogoutApiView,
+    LogoutAPIView,
     CreateUserAPIView,
     
     UnlockAdminUserAPIView,
@@ -36,7 +36,7 @@ urlpatterns = [
     path('admin/login/', AdminLoginView.as_view(), name='admin-login'),
     
     path('activate/<str:activation_token>/', ActivateUserAPIView.as_view() ),
-    path('auth/logout', LogoutApiView.as_view(), name='logout'),
+    path('auth/logout/', LogoutAPIView.as_view(), name='logout'),
     path('change_password/', ChangePasswordAPIView.as_view() ),
     path('password_reset/', include('django_rest_passwordreset.urls' )),
 

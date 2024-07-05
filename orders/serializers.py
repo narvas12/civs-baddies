@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from users.models import Address
+from users.serializers import CustomUserSerializer
 from .models import Order, OrderItem
 
 
@@ -21,8 +22,17 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['id', 'order', 'product', 'product_name', 'product_price', 'product_image', 'quantity', 'total']
 
-
 class OrderSerializer(serializers.ModelSerializer):
+    orderitems = OrderItemSerializer(many=True, read_only=True)
+    total_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    buyer = CustomUserSerializer()
+    
+    class Meta:
+        model = Order
+        fields = ['id', 'buyer', 'order_number', 'status', 'is_paid', 'shipping_address', 'created_at', 'orderitems', 'total_cost']
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
     orderitems = OrderItemSerializer(many=True, read_only=True)
     total_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     

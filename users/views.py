@@ -27,7 +27,7 @@ from .serializers import (
     CustomUserSerializer,
     CustomerProfileSerializer,
     LoginSerializer,
-    LogoutUserSerializer,
+    LogoutSerializer,
     AdminProfileSerializer,
     GetAllUserSerializer,
     UserUpdateSerializer,
@@ -125,15 +125,15 @@ class UserLoginAPIView(GenericAPIView):
 
 
 
-class LogoutApiView(GenericAPIView):
-    serializer_class=LogoutUserSerializer
-    # renderer_classes = (ApiCustomRenderer,)
+class LogoutAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer=self.serializer_class(data=request.data)
+        serializer = LogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'message':"Logout is succesful"}, status=status.HTTP_200_OK)
+
+        return Response({"message": "Successfully logged out."}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ChangePasswordAPIView(BaseAPIView):

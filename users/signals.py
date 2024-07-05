@@ -40,6 +40,8 @@ def log_user_logged_out(sender, request, user, **kwargs):
             login_log.save()
         except LoginLog.DoesNotExist:
             pass
+    else:
+        pass
     print("User Logged out")
     
     

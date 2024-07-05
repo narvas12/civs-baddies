@@ -9,9 +9,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from notifications.utils import send_order_confirmation_email
 from orders.managers import OrderManager
+from rest_framework.exceptions import NotFound
 from products.models import Product
 from .models import Order, OrderItem, Transaction
-from .serializers import OrderSerializer, OrderItemSerializer, PaymentSerializer, TrendingProductSerializer
+from .serializers import OrderCreateSerializer, OrderSerializer, OrderItemSerializer, PaymentSerializer, TrendingProductSerializer
 from users.models import Address
 from cart.models import CartItem
 from django.contrib.auth import get_user_model
@@ -51,7 +52,7 @@ class OrderCreateAPIView(APIView):
             'payment_reference': str(uuid.uuid4())
         }
 
-        order_serializer = OrderSerializer(data=order_data)
+        order_serializer = OrderCreateSerializer(data=order_data)
         if order_serializer.is_valid():
             order_instance = order_serializer.save()
 
@@ -199,13 +200,6 @@ class UserOrdersView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-# class OrderDetailView(generics.RetrieveAPIView):
-#     serializer_class = OrderSerializer
-#     permission_classes = [IsAuthenticated]
-
-#     def get_queryset(self):
-#         return Order.objects.filter(buyer=self.request.user)
     
 
 class OrderDetailView(APIView):
@@ -219,6 +213,24 @@ class OrderDetailView(APIView):
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class AdminOrderDetailView(RetrieveAPIView):
+    serializer_class = OrderSerializer
+    # permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        return Order.objects.all()
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        order_id = self.kwargs.get(self.lookup_field)
+        try:
+            order = queryset.get(id=order_id)
+        except Order.DoesNotExist:
+            raise NotFound("Order not found")
+        return order
 
 
 class OrderListView(ListAPIView):
