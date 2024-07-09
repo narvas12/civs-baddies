@@ -77,14 +77,20 @@ class OrderManager(models.Manager):
                 'order_number': order.order_number,
                 'status': order.status,
                 'is_paid': order.is_paid,
-                'shipping_address': order.shipping_address.id,
+                'shipping_address': {
+                    'id': order.shipping_address.id,
+                    'apartment_address': order.shipping_address.apartment_address,
+                    'street': order.shipping_address.street_address,
+                    'city': order.shipping_address.city,
+                    'country': order.shipping_address.country.name,
+                },
                 'created_at': order.created_at,
                 'orderitems': []
             }
 
             total_amount = Decimal(0)
             discount = Decimal(0)
-            tax_rate = Decimal(0.10)  # Assuming a flat tax rate of 10%
+            tax_rate = Decimal(0.10)  
 
             for item in order_items:
                 product = item.product
