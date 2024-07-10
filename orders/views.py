@@ -215,22 +215,19 @@ class OrderDetailView(APIView):
             return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class AdminOrderDetailView(RetrieveAPIView):
+class AdminOrderDetailView(APIView):
     serializer_class = OrderSerializer
     # permission_classes = [IsAuthenticated]
     lookup_field = 'id'
 
-    def get_queryset(self):
-        return Order.objects.all()
-
-    def get_object(self):
-        queryset = self.get_queryset()
+    def get(self, request, *args, **kwargs):
         order_id = self.kwargs.get(self.lookup_field)
         try:
-            order = queryset.get(id=order_id)
+            order_data = Order.objects.get_order_details(order_id)
         except Order.DoesNotExist:
             raise NotFound("Order not found")
-        return order
+
+        return Response(order_data)
 
 
 class OrderListView(APIView):
