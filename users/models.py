@@ -50,6 +50,9 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.full_name or self.email
     
+    def get_full_name(self):
+        return self.full_name
+    
     def tokens(self):    
         refresh = RefreshToken.for_user(self)
         return {

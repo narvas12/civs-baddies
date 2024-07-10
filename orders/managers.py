@@ -27,7 +27,11 @@ class OrderManager(models.Manager):
         for order in orders:
             order_data = {
                 'id': order.id,
-                'buyer': order.buyer.id,
+                'buyer': {
+                'id': order.buyer.id,
+                'name': order.buyer.get_full_name(),
+                'email': order.buyer.email,
+            },
                 'order_number': order.order_number,
                 'status': order.status,
                 'is_paid': order.is_paid,
@@ -73,7 +77,11 @@ class OrderManager(models.Manager):
         for order in orders:
             order_data = {
                 'id': order.id,
-                'buyer': order.buyer.id,
+                'buyer': {
+                'id': order.buyer.id,
+                'name': order.buyer.get_full_name(),
+                'email': order.buyer.email,
+            },
                 'order_number': order.order_number,
                 'status': order.status,
                 'is_paid': order.is_paid,
@@ -114,7 +122,7 @@ class OrderManager(models.Manager):
     
 
     def get_order_details(self, order_id):
-        Order = apps.get_model('your_app_name', 'Order')
+        Order = apps.get_model('orders', 'Order')
         order = Order.objects.prefetch_related('orderitems__product').filter(id=order_id).first()
         
         if not order:
@@ -122,7 +130,11 @@ class OrderManager(models.Manager):
         
         order_data = {
             'id': order.id,
-            'buyer': order.buyer.id,
+            'buyer': {
+                'id': order.buyer.id,
+                'name': order.buyer.get_full_name(),
+                'email': order.buyer.email,
+            },
             'order_number': order.order_number,
             'status': order.status,
             'is_paid': order.is_paid,
@@ -160,14 +172,18 @@ class OrderManager(models.Manager):
         return order_data
 
     
-    def get_order_details(self, user, order_id):
+    def get_buyer_order_details(self, user, order_id):
         try:
             order = self.prefetch_related('orderitems__product').get(id=order_id, buyer=user)
             order_items = order.orderitems.all()
 
             order_data = {
                 'id': order.id,
-                'buyer': order.buyer.id,
+                'buyer': {
+                'id': order.buyer.id,
+                'name': order.buyer.get_full_name(),
+                'email': order.buyer.email,
+                },
                 'order_number': order.order_number,
                 'status': order.status,
                 'is_paid': order.is_paid,

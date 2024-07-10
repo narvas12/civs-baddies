@@ -207,7 +207,7 @@ class OrderDetailView(APIView):
 
     def get(self, request, order_id):
         try:
-            order_data = Order.objects.get_order_details(user=request.user, order_id=order_id)
+            order_data = Order.objects.get_buyer_order_details(user=request.user, order_id=order_id)
             return Response(order_data, status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
