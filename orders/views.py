@@ -233,13 +233,13 @@ class AdminOrderDetailView(RetrieveAPIView):
         return order
 
 
-class OrderListView(ListAPIView):
-    serializer_class = OrderSerializer
+class OrderListView(APIView):
     # permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
 
-    def get_queryset(self):
-        return Order.objects.all()    
-
+    def get(self, request, *args, **kwargs):
+        orders = Order.objects.list_orders()
+        return Response(orders)
 
 class OrderItemsListView(ListAPIView):
     serializer_class = OrderItemSerializer
