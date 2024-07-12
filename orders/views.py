@@ -3,7 +3,7 @@ import uuid
 from django.shortcuts import get_object_or_404, render
 import requests
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -12,7 +12,7 @@ from orders.managers import OrderManager
 from rest_framework.exceptions import NotFound
 from products.models import Product
 from .models import Order, OrderItem, Transaction
-from .serializers import OrderCreateSerializer, OrderSerializer, OrderItemSerializer, PaymentSerializer, TrendingProductSerializer
+from .serializers import OrderCreateSerializer, OrderSerializer, OrderItemSerializer, OrderStatusUpdateSerializer, PaymentSerializer, TrendingProductSerializer
 from users.models import Address
 from cart.models import CartItem
 from django.contrib.auth import get_user_model
@@ -255,4 +255,31 @@ class TrendingProducts(APIView):
 
         serializer = TrendingProductSerializer(trending_products, many=True)
 
+        return Response(serializer.data)
+    
+    
+    
+class OrderStatusUpdateView(UpdateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderStatusUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        return Order.objects.all()
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        order_id = self.kwargs.get(self.lookup_field)
+        try:
+            order = queryset.get(id=order_id)
+        except Order.DoesNotExist:
+            raise NotFound("Order not found")
+        return order
+
+    def update(self, request, *args, **kwargs):
+        order = self.get_object()
+        serializer = self.get_serializer(order, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data)

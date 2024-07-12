@@ -6,6 +6,7 @@ from orders.views import (
     OrderDetailView,
     OrderItemsListView,
     OrderListView,
+    OrderStatusUpdateView,
     # PaystackWebhook,
     TrendingProducts,
     UserOrdersView,
@@ -23,5 +24,6 @@ urlpatterns = [
     path('my_order/detail/<int:order_id>/', OrderDetailView.as_view()),
     path('orders/<int:order_id>/items/', OrderItemsListView.as_view()),
     path('orders/admin_details/<int:id>/', AdminOrderDetailView.as_view()),
+    path('orders/<int:id>/status/update/', OrderStatusUpdateView.as_view(), name='order-status-update'),
 ]
 

@@ -49,3 +49,14 @@ class PaymentSerializer(serializers.Serializer):
 class TrendingProductSerializer(serializers.Serializer):
     product_name = serializers.CharField(source='product__name')
     total_sold = serializers.IntegerField(source='total')
+    
+    
+class OrderStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status']
+
+    def validate_status(self, value):
+        if value not in dict(Order.STATUS_CHOICES).keys():
+            raise serializers.ValidationError("Invalid status")
+        return value
