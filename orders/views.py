@@ -19,6 +19,7 @@ from django.contrib.auth import get_user_model
 from core import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
+import logging
 
 
 
@@ -93,22 +94,30 @@ class OrderCreateAPIView(APIView):
         return Response(order_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PaymentView(APIView):
+logger = logging.getLogger(__name__)
+
+class PaymentAPIView(APIView):
+
     def post(self, request, order_id):
+        """
+        Initialize a payment.
+        """
         try:
             order = Order.objects.get(pk=order_id)
         except Order.DoesNotExist:
             return Response({'error': 'Invalid order ID.'}, status=status.HTTP_404_NOT_FOUND)
 
         email = order.buyer.email
-
         amount = sum(order_item.total for order_item in order.orderitems.all())
+
+        # Convert the amount to an integer in the smallest currency unit
+        amount_in_kobo = int(amount * 100)
 
         paystack_secret_key = settings.PAYSTACK_SECRET_KEY
         payload = {
             'email': email,
-            'amount': amount,
-            'callback_url': 'https://your-domain.com/callback/' + str(order_id), 
+            'amount': amount_in_kobo,
+            'callback_url': f'http://127.0.0.1:8000/api/v1/orders/payment/{order_id}/callback/',
         }
 
         headers = {
@@ -118,31 +127,28 @@ class PaymentView(APIView):
 
         try:
             response = requests.post('https://api.paystack.co/transaction/initialize', json=payload, headers=headers)
-            response.raise_for_status()  
-
+            response.raise_for_status()
             data = response.json()
-            authorization_url = data.get('authorization_url')
-
+            authorization_url = data.get('data', {}).get('authorization_url')
             return Response({'authorization_url': authorization_url}, status=status.HTTP_200_OK)
-
         except requests.exceptions.RequestException as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            logger.error(f'RequestException during payment initialization: {str(e)}')
+            return Response({'error': 'Failed to initialize payment. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f'Unexpected error during payment initialization: {str(e)}')
+            return Response({'error': 'An unexpected error occurred during payment initialization.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-class PaymentCallbackView(APIView):
-    def post(self, request, order_id):
+    def get(self, request, order_id):
+        """
+        Handle payment callback.
+        """
         try:
             order = Order.objects.get(pk=order_id)
         except Order.DoesNotExist:
             return Response({'error': 'Invalid order ID.'}, status=status.HTTP_404_NOT_FOUND)
 
-
         paystack_secret_key = settings.PAYSTACK_SECRET_KEY
-
-        reference = request.GET.get('reference') 
+        reference = request.GET.get('reference')
 
         headers = {
             'Authorization': f'Bearer {paystack_secret_key}',
@@ -150,8 +156,7 @@ class PaymentCallbackView(APIView):
 
         try:
             response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
-            response.raise_for_status()  
-
+            response.raise_for_status()
             data = response.json()
 
             if data['data']['status'] == 'success':
@@ -162,18 +167,23 @@ class PaymentCallbackView(APIView):
                     order=order,
                     reference=reference,
                     defaults={
-                        'amount': data['data']['amount'],  
+                        'amount': data['data']['amount'],
                         'status': data['data']['status'],
-                        'charged_at': data['data'].get('charged_at'),
-                        'message': data['data'].get('message'),
+                        'charged_at': data['data'].get('charged_at', None),
+                        'message': data['data'].get('message', ''),
                     }
                 )
+                return Response({'message': 'Payment successful and transaction recorded.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Payment verification failed.'}, status=status.HTTP_400_BAD_REQUEST)
 
         except requests.exceptions.RequestException as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            logger.error(f'RequestException during payment verification: {str(e)}')
+            return Response({'error': 'Failed to verify payment. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': 'An unexpected error occured'},  status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f'Unexpected error during payment verification: {str(e)}')
+            return Response({'error': 'An unexpected error occurred during payment verification.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class UserOrdersView(APIView):

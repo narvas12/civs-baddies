@@ -7,18 +7,18 @@ from orders.views import (
     OrderItemsListView,
     OrderListView,
     OrderStatusUpdateView,
-    # PaystackWebhook,
+    PaymentAPIView,
     TrendingProducts,
     UserOrdersView,
-    # Payment
-    
 )
 
 urlpatterns = [
     path('create-order/', OrderCreateAPIView.as_view()),
-    # path('pay-for-order/', PaystackWebhook.as_view()),
+
+    path('payment/<int:order_id>/pay/', PaymentAPIView.as_view(), name='payment-initialize'),
+    path('payment/<int:order_id>/callback/', PaymentAPIView.as_view(), name='payment-callback'),
+    
     path('trending-products/', TrendingProducts.as_view()),
-    # path("payment/", Payment),
     path('my_orders/', UserOrdersView().as_view()),
     path('orders/', OrderListView.as_view()),
     path('my_order/detail/<int:order_id>/', OrderDetailView.as_view()),
