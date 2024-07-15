@@ -120,36 +120,32 @@ class DeleteCartItems(APIView):
         return Response({'message': 'All cart items deleted successfully'}, status=204)
     
 
-
 class AddToWishlistView(APIView):
     def post(self, request):
-        user_id = request.data.get('user_id')
+        user = request.user
         product_id = request.data.get('product_id')
 
-        if not all([user_id, product_id]):
-            return Response({'error': 'User ID and product ID are required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not product_id:
+            return Response({'error': 'Product ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            wishlist_item = WishlistItem.objects.create(user_id=user_id, product_id=product_id)
+            wishlist_item = WishlistItem.objects.create(user=user, product_id=product_id)
             serializer = WishlistItemSerializer(wishlist_item)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 
 class AddWishlistToCartView(APIView):
     def post(self, request):
-        user_id = request.data.get('user_id')
-
-        if not user_id:
-            return Response({'error': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
 
         try:
-            wishlist_items = WishlistItem.objects.filter(user_id=user_id)
+            wishlist_items = WishlistItem.objects.filter(user=user)
             for wishlist_item in wishlist_items:
                 product = wishlist_item.product
 
-                existing_cart_item = CartItem.objects.filter(user_id=user_id, product=product).first()
+                existing_cart_item = CartItem.objects.filter(user=user, product=product).first()
 
                 if existing_cart_item:
                     existing_cart_item.quantity += 1
@@ -164,7 +160,7 @@ class AddWishlistToCartView(APIView):
                         color_id = None
 
                     CartItem.objects.create(
-                        user_id=user_id,
+                        user=user,
                         product=product,
                         quantity=1,  
                         size_id=size_id,  
