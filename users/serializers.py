@@ -58,7 +58,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
             password = validated_data.pop('password')
 
             validated_data['username'] = email
-            validated_data['is_active'] = False  # Set initial activation status to False
+            validated_data['is_active'] = True 
 
             user = CustomUser.objects.create_user(
                 full_name=full_name, email=email, mobile=mobile, password=password, **validated_data
