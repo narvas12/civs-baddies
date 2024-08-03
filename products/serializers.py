@@ -53,11 +53,23 @@ class VariationSerializer(serializers.ModelSerializer):
             'product_variant': {'required': False},
         }
 
-    def create(self, validated_data):
-        return super().create(validated_data)
 
-    def update(self, instance, validated_data):
-        return super().update(instance, validated_data)
+class CreateVariationsSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    variations = VariationSerializer(many=True)
+
+    def create(self, validated_data):
+        product_id = validated_data['product_id']
+        variations_data = validated_data['variations']
+        product = Product.objects.get(id=product_id)
+        variations = []
+
+        for variation_data in variations_data:
+            variation_data['product_variant'] = product
+            variation = Variation.objects.create(**variation_data)
+            variations.append(variation)
+
+        return variations
     
 
 class ProductSerializer(serializers.ModelSerializer):

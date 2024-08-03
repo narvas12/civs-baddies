@@ -9,7 +9,7 @@ from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, V
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-from .serializers import CoverPageCarouselSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, SupercategoryCreateSerializer, SupercategorySerializer, VariationSerializer 
+from .serializers import CoverPageCarouselSerializer, CreateVariationsSerializer, LatestArivalSerializer, ProductCategorySerializer, ProductSerializer, ProductDeleteSerializer, SupercategoryCreateSerializer, SupercategorySerializer, VariationSerializer 
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -135,6 +135,15 @@ class ProductCategoryListAPIView(generics.ListAPIView):
     pagination_class = None
 
 
+class CreateVariationsView(APIView):
+    def post(self, request):
+        serializer = CreateVariationsSerializer(data=request.data)
+        if serializer.is_valid():
+            variations = serializer.save()
+            return Response({'message': 'Variations created successfully', 'variations': VariationSerializer(variations, many=True).data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
 class VariationListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = VariationSerializer
@@ -177,7 +186,7 @@ class VariationListCreateAPIView(generics.ListCreateAPIView):
 class VariationListAPIView(generics.ListAPIView):
     serializer_class = VariationSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend]
-    filterset_fields = ['product_variant']  # filterset_class is not required here
+    filterset_fields = ['product_variant']  
 
     def get_queryset(self):
         product_id = self.kwargs.get('product_id')

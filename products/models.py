@@ -74,6 +74,5 @@ class Variation(models.Model):
     image = CloudinaryField("product/images/variations", blank=True)
     stock_quantity = models.PositiveIntegerField(default=0)
 
-
     def __str__(self):
-        return f"{self.product_variant}"
+        return f"{self.product_variant} - {self.size} - {self.color}"

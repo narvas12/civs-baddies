@@ -6,6 +6,7 @@ from .views import (
                    
                     CoverPageCarouselAPIView,
                     CoverPageCarouselListView,
+                    CreateVariationsView,
                     LatestArivalAPIView,
                     CategoryCreateAPIView,
                     LatestArrivalListView,
@@ -42,7 +43,7 @@ urlpatterns = [
     path('categories/list/', ProductCategoryListAPIView.as_view()),
 
     path('variations/', VariationListAPIView.as_view()),
-    path('variations/create/', VariationListCreateAPIView.as_view()),
+    path('variations/create/', CreateVariationsView.as_view()),
     path('variations/<int:pk>/', VariationRetrieveUpdateDestroyAPIView.as_view()),
     path('variations/product/<int:product_id>/', VariationListCreateAPIView.as_view()),
 
