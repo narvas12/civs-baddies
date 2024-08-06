@@ -33,7 +33,7 @@ class SupercategorySerializer(serializers.ModelSerializer):
 
 class ProductDetailSerializer(serializers.ModelSerializer):
    
-    category = serializers.SerializerMethodField()
+    category = ProductCategorySerializer(read_only=True)
     name = serializers.CharField()
     image = Base64ImageField()
 
@@ -74,6 +74,7 @@ class CreateVariationsSerializer(serializers.Serializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     variations = VariationSerializer(many=True, required=False)
+    category = ProductCategorySerializer(read_only=True)
 
     class Meta:
         model = Product
