@@ -19,6 +19,7 @@ from .views import (
                     # ProductListCreateAPIView,
                     ProductRetrieveUpdateDestroyAPIView,
                     ProductUpdateAPIView,
+                    VariationCreateView,
                     VariationListCreateAPIView,
                     VariationRetrieveUpdateDestroyAPIView,
                     VariationListAPIView,
@@ -43,7 +44,8 @@ urlpatterns = [
     path('categories/list/', ProductCategoryListAPIView.as_view()),
 
     path('variations/', VariationListAPIView.as_view()),
-    path('variations/create/', CreateVariationsView.as_view()),
+    path('variations/create/', CreateVariationsView.as_view()), #add multiple variations for a product
+    path('variations/add/', VariationCreateView.as_view()), #add single variation
     path('variations/<int:pk>/', VariationRetrieveUpdateDestroyAPIView.as_view()),
     path('variations/product/<int:product_id>/', VariationListCreateAPIView.as_view()),
 

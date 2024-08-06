@@ -144,6 +144,11 @@ class CreateVariationsView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class VariationCreateView(generics.CreateAPIView):
+    queryset = Variation.objects.all()
+    serializer_class = VariationSerializer
+
+
 class VariationListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = VariationSerializer
