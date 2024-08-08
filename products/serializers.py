@@ -46,12 +46,19 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class VariationSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Variation
         fields = '__all__'
         extra_kwargs = {
             'product_variant': {'required': False},
+            'image': {'write_only': True},
         }
+
+    def get_image_url(self, obj):
+        # Return the Cloudinary URL of the uploaded image
+        return obj.image.url if obj.image else None
 
 
 class CreateVariationsSerializer(serializers.Serializer):
