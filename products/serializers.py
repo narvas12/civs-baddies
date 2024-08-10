@@ -12,6 +12,17 @@ User = get_user_model()
 
 
 
+class ImageHandlingMixin:
+    def upload_image(self, image):
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
+            api_key=settings.CLOUDINARY_STORAGE['API_KEY'],
+            api_secret=settings.CLOUDINARY_STORAGE['API_SECRET']
+        )
+
+        upload_result = upload(image, folder="product/images/")
+        return upload_result['secure_url']
+
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
@@ -45,7 +56,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         exclude = "modified"
 
 
-class VariationSerializer(serializers.ModelSerializer):
+class VariationSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -57,8 +68,12 @@ class VariationSerializer(serializers.ModelSerializer):
         }
 
     def get_image_url(self, obj):
-        # Return the Cloudinary URL of the uploaded image
-        return obj.image.url if obj.image else None
+        return obj.image if obj.image else None
+
+    def create(self, validated_data):
+        if 'image' in validated_data:
+            validated_data['image'] = self.upload_image(validated_data['image'])
+        return super().create(validated_data)
 
 
 class CreateVariationsSerializer(serializers.Serializer):
@@ -78,21 +93,29 @@ class CreateVariationsSerializer(serializers.Serializer):
 
         return variations
     
-
-class ProductSerializer(serializers.ModelSerializer):
+    
+class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
-    category = ProductCategorySerializer(read_only=True)
+    category = ProductCategorySerializer(read_only=True)  # Ensure category is required
 
     class Meta:
         model = Product
         fields = '__all__'
         extra_kwargs = {
             'slug': {'required': False},
-            'category': {'required': False}
         }
 
     def create(self, validated_data):
         variations_data = validated_data.pop('variations', [])
+        category_data = validated_data.pop('category', None)
+
+        # Provide a default or fallback category if none is provided
+        if category_data:
+            category, created = ProductCategory.objects.get_or_create(**category_data)
+        else:
+            category = ProductCategory.objects.get(name="Default Category")  # Replace with your default category
+        validated_data['category'] = category
+
         name = validated_data.get('name')
         product_tag = validated_data.get('product_tag', 'TS')
         slug = self.generate_unique_slug(name, product_tag)
@@ -108,7 +131,6 @@ class ProductSerializer(serializers.ModelSerializer):
             Variation.objects.create(**variation_data)
 
         return product
-    
 
     def generate_unique_slug(self, name, product_tag):
         cleaned_name = name.replace("'", "")
@@ -122,17 +144,7 @@ class ProductSerializer(serializers.ModelSerializer):
             counter += 1
         
         return slug
-    
 
-    def upload_image(self, image):
-        cloudinary.config(
-            cloud_name=settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
-            api_key=settings.CLOUDINARY_STORAGE['API_KEY'],
-            api_secret=settings.CLOUDINARY_STORAGE['API_SECRET']
-        )
-
-        upload_result = upload(image, folder="product/images/")
-        return upload_result['secure_url']
 
 
 class ProductDeleteSerializer(serializers.Serializer):
