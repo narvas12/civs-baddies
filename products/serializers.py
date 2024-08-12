@@ -10,8 +10,6 @@ from cloudinary.uploader import upload
 
 User = get_user_model()
 
-
-
 class ImageHandlingMixin:
     def upload_image(self, image):
         cloudinary.config(
@@ -28,12 +26,10 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         model = ProductCategory
         fields = '__all__'
 
-
 class SupercategoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supercategory
         fields = ['name']
-
 
 class SupercategorySerializer(serializers.ModelSerializer):
     category = ProductCategorySerializer()
@@ -41,20 +37,20 @@ class SupercategorySerializer(serializers.ModelSerializer):
         model = Supercategory
         fields = ['name', 'category']
 
-
 class ProductDetailSerializer(serializers.ModelSerializer):
-   
     category = ProductCategorySerializer(read_only=True)
     name = serializers.CharField()
-    image = Base64ImageField()
+    image_url = serializers.SerializerMethodField()
 
     def get_category(self, obj):
         return obj.category.name
 
+    def get_image_url(self, obj):
+        return obj.image.url if obj.image else None
+
     class Meta:
         model = Product
         exclude = "modified"
-
 
 class VariationSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     image_url = serializers.SerializerMethodField()
@@ -68,13 +64,12 @@ class VariationSerializer(serializers.ModelSerializer, ImageHandlingMixin):
         }
 
     def get_image_url(self, obj):
-        return obj.image if obj.image else None
+        return obj.image.url if obj.image else None
 
     def create(self, validated_data):
         if 'image' in validated_data:
             validated_data['image'] = self.upload_image(validated_data['image'])
         return super().create(validated_data)
-
 
 class CreateVariationsSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
@@ -92,53 +87,52 @@ class CreateVariationsSerializer(serializers.Serializer):
             variations.append(variation)
 
         return variations
-    
-    
+
 class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
-    category_id = serializers.IntegerField(write_only=True, required=True)  # Expect category_id in the input
+    category_id = serializers.IntegerField(write_only=True, required=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = '__all__'
         extra_kwargs = {
             'slug': {'required': False},
-            'category': {'read_only': True},  # Make category read-only
+            'category': {'read_only': True},
+            'image': {'write_only': True},
         }
 
     def create(self, validated_data):
         variations_data = validated_data.pop('variations', [])
         category_id = validated_data.pop('category_id', None)
 
-        # Retrieve and set the category using the provided category_id
         if category_id:
             try:
                 category = ProductCategory.objects.get(id=category_id)
-                validated_data['category'] = category  # Set the category in validated_data
+                validated_data['category'] = category
             except ProductCategory.DoesNotExist:
                 raise serializers.ValidationError("Invalid category ID provided.")
         else:
             raise serializers.ValidationError("Category ID is required.")
 
-        # Generate unique slug
         name = validated_data.get('name')
         product_tag = validated_data.get('product_tag', 'TS')
         slug = self.generate_unique_slug(name, product_tag)
         validated_data['slug'] = slug
 
-        # Handle image upload
         if 'image' in validated_data:
             validated_data['image'] = self.upload_image(validated_data['image'])
 
-        # Create the product
         product = super().create(validated_data)
 
-        # Create variations
         for variation_data in variations_data:
             variation_data['product_variant'] = product
             Variation.objects.create(**variation_data)
 
         return product
+
+    def get_image_url(self, obj):
+        return obj.image.url if obj.image else None
 
     def generate_unique_slug(self, name, product_tag):
         cleaned_name = name.replace("'", "")
@@ -153,11 +147,8 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
         return slug
 
-
-
 class ProductDeleteSerializer(serializers.Serializer):
     product_ids = serializers.ListField(child=serializers.IntegerField())
-
 
 class CoverPageCarouselSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
@@ -168,7 +159,6 @@ class CoverPageCarouselSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         return obj.images.url if obj.images else None
-
 
 class LatestArivalSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
