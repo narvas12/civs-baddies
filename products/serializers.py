@@ -96,36 +96,44 @@ class CreateVariationsSerializer(serializers.Serializer):
     
 class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
-    category = ProductCategorySerializer(read_only=True)  # Ensure category is required
+    category_id = serializers.IntegerField(write_only=True, required=True)  # Expect category_id in the input
 
     class Meta:
         model = Product
         fields = '__all__'
         extra_kwargs = {
             'slug': {'required': False},
+            'category': {'read_only': True},  # Make category read-only
         }
 
     def create(self, validated_data):
         variations_data = validated_data.pop('variations', [])
-        category_data = validated_data.pop('category', None)
+        category_id = validated_data.pop('category_id', None)
 
-        # Provide a default or fallback category if none is provided
-        if category_data:
-            category, created = ProductCategory.objects.get_or_create(**category_data)
+        # Retrieve and set the category using the provided category_id
+        if category_id:
+            try:
+                category = ProductCategory.objects.get(id=category_id)
+                validated_data['category'] = category  # Set the category in validated_data
+            except ProductCategory.DoesNotExist:
+                raise serializers.ValidationError("Invalid category ID provided.")
         else:
-            category = ProductCategory.objects.get(name="Default Category")  # Replace with your default category
-        validated_data['category'] = category
+            raise serializers.ValidationError("Category ID is required.")
 
+        # Generate unique slug
         name = validated_data.get('name')
         product_tag = validated_data.get('product_tag', 'TS')
         slug = self.generate_unique_slug(name, product_tag)
         validated_data['slug'] = slug
 
+        # Handle image upload
         if 'image' in validated_data:
             validated_data['image'] = self.upload_image(validated_data['image'])
 
+        # Create the product
         product = super().create(validated_data)
 
+        # Create variations
         for variation_data in variations_data:
             variation_data['product_variant'] = product
             Variation.objects.create(**variation_data)
@@ -137,12 +145,12 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
         base_slug = cleaned_name.lower().replace(' ', '-')
         random_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
         slug = f"{base_slug}-{product_tag}-{random_chars}"
-        
+
         counter = 1
         while Product.objects.filter(slug=slug).exists():
             slug = f"{base_slug}-{product_tag}-{random_chars}-{counter}"
             counter += 1
-        
+
         return slug
 
 
