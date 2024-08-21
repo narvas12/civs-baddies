@@ -21,13 +21,18 @@ from .serializers import (
     SupercategorySerializer, 
     VariationSerializer 
 )
-from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class ProductAPIView(APIView):
-    permission_classes = [IsAuthenticated]
     filter_backends = [SearchFilter]
     filterset_class = ProductFilter
+
+    def get_permissions(self):
+        if self.request.method in ['POST', 'PUT', 'DELETE']:
+            self.permission_classes = [IsAuthenticated]
+        else:
+            self.permission_classes = [AllowAny]
+        return super().get_permissions()
 
     def get(self, request, pk=None, *args, **kwargs):
         if pk:
@@ -83,6 +88,7 @@ class ProductAPIView(APIView):
     def filter_queryset(self, queryset):
         # Apply filtering logic here based on request parameters
         return queryset
+
 
 # class ProductCreateAPIView(generics.CreateAPIView):
 #     permission_classes = [IsAuthenticated]
