@@ -10,15 +10,11 @@ from .views import (
                     LatestArivalAPIView,
                     CategoryCreateAPIView,
                     LatestArrivalListView,
+                    ProductAPIView,
                     ProductCategoryListAPIView,
-                    ProductCreateAPIView,
-                    ProductDeleteAPIView,
-                    ProductDetailView, 
-                    ProductListAPIView,
+                    
                     SuperCategoryCreateAPIView,
-                    # ProductListCreateAPIView,
-                    ProductRetrieveUpdateDestroyAPIView,
-                    ProductUpdateAPIView,
+                    
                     VariationCreateView,
                     VariationListCreateAPIView,
                     VariationRetrieveUpdateDestroyAPIView,
@@ -28,15 +24,8 @@ from .views import (
 
 
 urlpatterns = [
-    path('products/create/', ProductCreateAPIView.as_view()),
-    path('product/<int:pk>/', ProductUpdateAPIView.as_view()),
-
-    # path('add_products/', ProductListCreateAPIView.as_view()),
-    path('product/update/<int:pk>/', ProductRetrieveUpdateDestroyAPIView.as_view()),
-    path('product/detail/<int:pk>/', ProductDetailView.as_view()),
-
-    path('products/list/', ProductListAPIView.as_view()),
-    path('products/delete/', ProductDeleteAPIView.as_view()),
+    path('product/', ProductAPIView.as_view(), name='product-list-create'),
+    path('product/<int:pk>/', ProductAPIView.as_view(), name='product-detail-update-destroy'),
 
     path('super-categories/add/', SuperCategoryCreateAPIView.as_view()),
 
