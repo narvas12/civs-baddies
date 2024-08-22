@@ -42,7 +42,7 @@ class ProductAPIView(APIView):
         else:
             products = Product.objects.all()
             filtered_products = self.filter_queryset(products)
-            serializer = ProductSerializer(filtered_products, many=True)
+            serializer = ProductDetailSerializer(filtered_products, many=True)
             return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):

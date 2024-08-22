@@ -37,20 +37,7 @@ class SupercategorySerializer(serializers.ModelSerializer):
         model = Supercategory
         fields = ['name', 'category']
 
-class ProductDetailSerializer(serializers.ModelSerializer):
-    category = ProductCategorySerializer(read_only=True)
-    name = serializers.CharField()
-    image_url = serializers.SerializerMethodField()
 
-    def get_category(self, obj):
-        return obj.category.name
-
-    def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
-
-    class Meta:
-        model = Product
-        exclude = "modified"
 
 class VariationSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     image_url = serializers.SerializerMethodField()
@@ -71,6 +58,7 @@ class VariationSerializer(serializers.ModelSerializer, ImageHandlingMixin):
             validated_data['image'] = self.upload_image(validated_data['image'])
         return super().create(validated_data)
 
+
 class CreateVariationsSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     variations = VariationSerializer(many=True)
@@ -87,6 +75,43 @@ class CreateVariationsSerializer(serializers.Serializer):
             variations.append(variation)
 
         return variations
+
+
+class ProductDetailSerializer(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField()
+    name = serializers.CharField()
+    variations = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+
+    def get_category(self, obj):
+        if obj.category:
+            return {
+                'id': obj.category.id,
+                'super_category': obj.category.super_category.id if obj.category.super_category else None,
+                'name': obj.category.name,
+                
+                'created_at': obj.category.created_at,
+                'updated_at': obj.category.updated_at,
+            }
+        return None
+
+    def get_variations(self, obj):
+        variations = obj.variations.all()
+        return VariationSerializer(variations, many=True).data
+
+    def get_image_url(self, obj):
+        return obj.image.url if obj.image else None
+
+    class Meta:
+        model = Product
+        fields = [
+            'id','product_tag', 'category', 'name', 'slug', 'desc', 
+            'image_url', 'price', 'discounted_percentage', 'quantity', 
+            'initial_stock_quantity', 'is_suspended', 'created_at', 
+            'updated_at', 'variations'
+        ]
+
+
 
 class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
@@ -148,15 +173,15 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
         return slug
 
 
-class ProductDetailSerializer(serializers.ModelSerializer):
-    category = ProductCategorySerializer()
-    class Meta:
-        model = Product
-        fields = [
-            'product_tag', 'category', 'name', 'slug', 'desc', 
-            'image', 'price', 'discounted_percentage', 'quantity', 
-            'initial_stock_quantity', 'is_suspended', 'created_at', 'updated_at'
-        ]
+# class ProductDetailSerializer(serializers.ModelSerializer):
+#     category = ProductCategorySerializer()
+#     class Meta:
+#         model = Product
+#         fields = [
+#             'product_tag', 'category', 'name', 'slug', 'desc', 
+#             'image', 'price', 'discounted_percentage', 'quantity', 
+#             'initial_stock_quantity', 'is_suspended', 'created_at', 'updated_at'
+#         ]
 
 class ProductDeleteSerializer(serializers.Serializer):
     product_ids = serializers.ListField(child=serializers.IntegerField())
