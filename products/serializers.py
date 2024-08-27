@@ -157,7 +157,10 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
         return product
 
     def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
+
+        if isinstance(obj.image, str):
+            return obj.image  
+        return obj.image.url if obj.image else None  
 
     def generate_unique_slug(self, name, product_tag):
         cleaned_name = name.replace("'", "")
@@ -172,16 +175,6 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
         return slug
 
-
-# class ProductDetailSerializer(serializers.ModelSerializer):
-#     category = ProductCategorySerializer()
-#     class Meta:
-#         model = Product
-#         fields = [
-#             'product_tag', 'category', 'name', 'slug', 'desc', 
-#             'image', 'price', 'discounted_percentage', 'quantity', 
-#             'initial_stock_quantity', 'is_suspended', 'created_at', 'updated_at'
-#         ]
 
 class ProductDeleteSerializer(serializers.Serializer):
     product_ids = serializers.ListField(child=serializers.IntegerField())
