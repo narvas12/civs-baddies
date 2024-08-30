@@ -36,12 +36,13 @@ def get_default_product_category():
 
 
 class Product(models.Model):
+
+    
     product_tag = models.CharField(max_length=10, default="TS-001")
     category = models.ForeignKey(ProductCategory, related_name="product_list", on_delete=models.SET(get_default_product_category))
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)  
     desc = models.TextField(_("Description"), blank=True)
-    image = CloudinaryField("product/image/", blank=True)
     price = models.DecimalField(decimal_places=2, max_digits=10)
     discounted_percentage = models.DecimalField(decimal_places=2, max_digits=10, blank=True, null=True)
     quantity = models.PositiveIntegerField(default=1)
@@ -57,22 +58,47 @@ class Product(models.Model):
         return self.name if self.name else "Product (No Name)"
 
 
-class CoverPageCarousel(models.Model):
-    images = CloudinaryField("product/image/coverpage", blank=True)
+class ProductImage(models.Model):
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    image = CloudinaryField("product/image/")
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Image for {self.product.name}"
+
+
+class Size(models.Model):
+    name = models.CharField(max_length=100)
+    quantity = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.name
+
+
+class Color(models.Model):
+    name = models.CharField(max_length=100)
+    quantity = models.PositiveIntegerField(default=0)
+    sizes = models.ManyToManyField(Size, blank=True)  # ManyToManyField to Size
+
+    def __str__(self):
+        return self.name
+
+
+class Variation(models.Model):
+    product_variant = models.ForeignKey(Product, related_name='variations', on_delete=models.CASCADE, null=True, blank=True)
+    colors = models.ManyToManyField(Color, related_name='variations', blank=True)  # ManyToManyField to Color
+    price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+
+    def __str__(self):
+        colors_str = ', '.join(str(color) for color in self.colors.all())
+        return f"{self.product_variant} - {colors_str}"
+
+    
 
 class LatestArival(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     image = CloudinaryField("product/image/latest", blank=True)
 
 
-class Variation(models.Model):
-    product_variant = models.ForeignKey(Product, related_name='variations', on_delete=models.CASCADE, null=True, blank=True)
-    size = models.CharField(max_length=100, null=True, blank=True)
-    color = models.CharField(max_length=100, null=True, blank=True)
-    price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
-    image = CloudinaryField("product/images/variations", blank=True)
-    stock_quantity = models.PositiveIntegerField(default=0)
-
-    def __str__(self):
-        return f"{self.product_variant} - {self.size} - {self.color}"
+class CoverPageCarousel(models.Model):
+    images = CloudinaryField("product/image/coverpage", blank=True)

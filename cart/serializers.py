@@ -1,13 +1,34 @@
 from rest_framework import serializers
 from cart.models import CartItem, WishlistItem
-from products.models import Product
+from products.models import Product, ProductImage
 from products.serializers import ProductSerializer
 
 
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductImage
+        fields = ['image']
+
+    def get_image(self, obj):
+        return obj.image.url if obj.image else None
+
+
 class ProductSerializer(serializers.ModelSerializer):
+    first_image = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = ['id', 'name', 'image', 'price', 'category', 'discounted_percentage', 'product_tag']  
+        fields = ['id', 'name', 'first_image', 'price', 'category', 'discounted_percentage', 'product_tag']
+
+    def get_first_image(self, obj):
+
+        first_image = obj.productimage_set.first()  # Use the default related manager
+        if first_image:
+            return ProductImageSerializer(first_image).data  # Serialize the image using ProductImageSerializer
+        return None
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)

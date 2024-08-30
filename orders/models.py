@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from orders.managers import OrderManager
-from products.models import Product
+from products.models import Product, Variation
 from users.models import Address, CustomUser
 from users.models import Address, CustomUser
 
@@ -66,22 +66,24 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name="orderitems", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variation = models.ForeignKey(Variation, on_delete=models.SET_NULL, null=True, blank=True)  # Link to variation
     quantity = models.PositiveIntegerField()
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
 
     @cached_property
     def get_cost(self):
         return self.quantity * self.product.price
-    
+
     @staticmethod
-    def create_order_item(order, product, quantity):
+    def create_order_item(order, product, quantity, variation=None):
         total = quantity * product.price  
-        order_item = OrderItem()
-        order_item.order = order
-        order_item.product = product
-        order_item.quantity = quantity
-        order_item.total = total  
+        order_item = OrderItem(
+            order=order,
+            product=product,
+            quantity=quantity,
+            total=total,
+            variation=variation  # Save the variation to the order item
+        )
         return order_item
     
 

@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from .serializers import (
     CoverPageCarouselSerializer, 
-    CreateVariationsSerializer, 
     LatestArivalSerializer, 
     ProductCategorySerializer,
     ProductDeleteSerializer,
@@ -22,6 +21,8 @@ from .serializers import (
     VariationSerializer 
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.conf import settings
+
 
 class ProductAPIView(APIView):
     filter_backends = [SearchFilter]
@@ -218,72 +219,42 @@ class ProductCategoryListAPIView(generics.ListAPIView):
     pagination_class = None
 
 
-class CreateVariationsView(APIView):
+class VariationAPIView(APIView):
+    def get(self, request, pk=None):
+        if pk:
+            # Retrieve a single variation
+            variation = get_object_or_404(Variation, pk=pk)
+            serializer = VariationSerializer(variation)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            # List all variations
+            variations = Variation.objects.all()
+            serializer = VariationSerializer(variations, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request):
-        serializer = CreateVariationsSerializer(data=request.data)
+        if isinstance(request.data, list):
+            serializer = VariationSerializer(data=request.data, many=True)
+        else:
+            serializer = VariationSerializer(data=request.data)
+        
         if serializer.is_valid():
-            variations = serializer.save()
-            return Response({'message': 'Variations created successfully', 'variations': VariationSerializer(variations, many=True).data}, status=status.HTTP_201_CREATED)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
-class VariationCreateView(generics.CreateAPIView):
-    queryset = Variation.objects.all()
-    serializer_class = VariationSerializer
+    def put(self, request, pk):
+        variation = get_object_or_404(Variation, pk=pk)
+        serializer = VariationSerializer(variation, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class VariationListCreateAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = VariationSerializer
-
-    def get_queryset(self):
-        product_id = self.kwargs.get('product_id')
-        return Variation.objects.filter(product_variant_id=product_id)
-
-    def create(self, request, *args, **kwargs):
-        product_id = request.data.get('product_id')
-        variations_data = request.data.get('variations', [])
-
-        if not product_id or not variations_data:
-            return Response(
-                {"detail": "Product ID and variations data are required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response(
-                {"detail": "Product not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        variations = []
-        for variation_data in variations_data:
-            variation_data['product_variant'] = product.id 
-            serializer = self.get_serializer(data=variation_data)
-            serializer.is_valid(raise_exception=True)
-            created_variation = serializer.save()
-            variations.append(created_variation)
-
-        return Response(
-            VariationSerializer(variations, many=True).data,
-            status=status.HTTP_201_CREATED
-        )
-
-class VariationListAPIView(generics.ListAPIView):
-    serializer_class = VariationSerializer
-    filter_backends = [SearchFilter, DjangoFilterBackend]
-    filterset_fields = ['product_variant']  
-
-    def get_queryset(self):
-        product_id = self.kwargs.get('product_id')
-        return Variation.objects.filter(product_variant_id=product_id)
-
-class VariationRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated]
-    queryset = Variation.objects.all()
-    serializer_class = VariationSerializer
+    def delete(self, request, pk):
+        variation = get_object_or_404(Variation, pk=pk)
+        variation.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 

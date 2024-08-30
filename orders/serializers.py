@@ -1,26 +1,41 @@
 from rest_framework import serializers
+from products.models import Variation
 from users.models import Address
 from users.serializers import CustomUserSerializer
 from .models import Order, OrderItem
 
 
-# class OrderSerializer(serializers.ModelSerializer):
-#     shipping_address = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), required=True)
+class VariationDetailSerializer(serializers.ModelSerializer):
+    colors = serializers.SerializerMethodField()
 
-#     class Meta:
-#         model = Order
-#         fields = ['id', 'buyer', 'order_number', 'status', 'is_paid', 'shipping_address',]
-#         read_only_fields = ['id', 'order_number', 'status', 'is_paid']
+    class Meta:
+        model = Variation
+        fields = ['id', 'product_variant', 'colors']
 
+    def get_colors(self, obj):
+        return [
+            {
+                "color_name": color.name,
+                "sizes": [
+                    {
+                        "size_name": size.name,
+                        "quantity": size.quantity
+                    } for size in color.sizes.all()
+                ]
+            } for color in obj.colors.all()
+        ]
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
-    product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_description = serializers.CharField(source='product.description', read_only=True)
     product_image = serializers.ImageField(source='product.image', read_only=True)
+    variation = VariationDetailSerializer()
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product', 'product_name', 'product_price', 'product_image', 'quantity', 'total']
+        fields = ['id', 'order', 'product', 'product_name', 'product_description', 'product_image', 'quantity', 'total', 'variation']
+
+
 
 class OrderSerializer(serializers.ModelSerializer):
     orderitems = OrderItemSerializer(many=True, read_only=True)

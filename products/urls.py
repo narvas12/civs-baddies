@@ -2,23 +2,15 @@ from django.urls import path
 
 
 from .views import (
-                    
-                   
                     CoverPageCarouselAPIView,
                     CoverPageCarouselListView,
-                    CreateVariationsView,
                     LatestArivalAPIView,
                     CategoryCreateAPIView,
                     LatestArrivalListView,
                     ProductAPIView,
                     ProductCategoryListAPIView,
-                    
                     SuperCategoryCreateAPIView,
-                    
-                    VariationCreateView,
-                    VariationListCreateAPIView,
-                    VariationRetrieveUpdateDestroyAPIView,
-                    VariationListAPIView,
+                    VariationAPIView,
                     )
 
 
@@ -32,11 +24,8 @@ urlpatterns = [
     path('categories/add/', CategoryCreateAPIView.as_view()),
     path('categories/list/', ProductCategoryListAPIView.as_view()),
 
-    path('variations/', VariationListAPIView.as_view()),
-    path('variations/create/', CreateVariationsView.as_view()), #add multiple variations for a product
-    path('variations/add/', VariationCreateView.as_view()), #add single variation
-    path('variations/<int:pk>/', VariationRetrieveUpdateDestroyAPIView.as_view()),
-    path('variations/product/<int:product_id>/', VariationListCreateAPIView.as_view()),
+    path('variations/', VariationAPIView.as_view()),
+    path('variations/<int:pk>/', VariationAPIView.as_view()),
 
 
     path('coverpage-carousel/add/', CoverPageCarouselAPIView.as_view()),

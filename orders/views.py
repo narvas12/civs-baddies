@@ -22,7 +22,6 @@ from django.db import DatabaseError
 import logging
 
 
-
 class OrderCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -34,7 +33,6 @@ class OrderCreateAPIView(APIView):
             return Response({"message": "No items in the cart."}, status=status.HTTP_400_BAD_REQUEST)
 
         total_cost = sum(item.total_price for item in cart_items)
-
         shipping_address_id = request.data.get('shipping_address_id')
 
         try:
@@ -59,17 +57,21 @@ class OrderCreateAPIView(APIView):
 
             products = []
             for cart_item in cart_items:
-                order_item = OrderItem.objects.create(
+                OrderItem.create_order_item(
                     order=order_instance,
                     product=cart_item.product,
                     quantity=cart_item.quantity,
-                    total=cart_item.total_price
-                )
+                    variation=cart_item.variation  # Pass the variation if it exists
+                ).save()
+
+                # Fetch the first image URL from the related ProductImage model
+                first_image = cart_item.product.productimage_set.first()
+                image_url = first_image.image.url if first_image else None
 
                 products.append({
                     'name': cart_item.product.name,
                     'price': cart_item.product.price,
-                    'image_url': cart_item.product.image
+                    'image_url': image_url  # Use the correct image URL
                 })
 
             cart_items.delete()
@@ -92,6 +94,8 @@ class OrderCreateAPIView(APIView):
             return Response({'order': order_serializer.data, 'payment': payment_data})
 
         return Response(order_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 logger = logging.getLogger(__name__)

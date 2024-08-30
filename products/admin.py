@@ -13,7 +13,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(Supercategory)
-class ProductCategoryAdmin(admin.ModelAdmin):
+class SupercategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
 
 
@@ -21,10 +21,6 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 class ProductCategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
 
-
-@admin.register(Variation)
-class VariationAdmin(admin.ModelAdmin):
-   list_display = ['id','product_variant', 'color','size', "stock_quantity"]
     
 
 @admin.register(LatestArival)
