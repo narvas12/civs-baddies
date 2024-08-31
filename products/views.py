@@ -22,7 +22,7 @@ from .serializers import (
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
-
+from drf_yasg.utils import swagger_auto_schema
 
 class ProductAPIView(APIView):
     filter_backends = [SearchFilter]
@@ -34,7 +34,11 @@ class ProductAPIView(APIView):
         else:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
-
+    
+    @swagger_auto_schema(
+        responses={200: ProductDetailSerializer(many=True)},
+        operation_description="Retrieve all products or a specific product by ID"
+    )
     def get(self, request, pk=None, *args, **kwargs):
         if pk:
             product = get_object_or_404(Product, pk=pk)
@@ -46,6 +50,27 @@ class ProductAPIView(APIView):
             serializer = ProductDetailSerializer(filtered_products, many=True)
             return Response(serializer.data)
 
+
+    @swagger_auto_schema(
+        request_body=ProductSerializer,
+        responses={201: ProductSerializer},
+        operation_description="Create a new product",
+        examples={
+            'application/json': {
+                "name": "Sample Product",
+                "category_id": 1,
+                "price": "99.99",
+                "quantity": 10,
+                "desc": "A detailed description of the sample product.",
+                "product_tag": "SP-001",
+                "image_files": ["image1.png", "image2.png"],
+                "variations": [
+                    {"size": "M", "color": "Red", "price": "105.99"},
+                    {"size": "L", "color": "Blue", "price": "110.99"}
+                ]
+            }
+        }
+    )
     def post(self, request, *args, **kwargs):
         serializer = ProductSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -55,6 +80,11 @@ class ProductAPIView(APIView):
             'product': serializer.data
         }, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        request_body=ProductSerializer,
+        responses={200: ProductSerializer},
+        operation_description="Update an existing product by ID"
+    )
     def put(self, request, pk=None, *args, **kwargs):
         product = get_object_or_404(Product, pk=pk)
         serializer = ProductSerializer(product, data=request.data, partial=True)
