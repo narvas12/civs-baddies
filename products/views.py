@@ -24,6 +24,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema
 
+
+
 class ProductAPIView(APIView):
     filter_backends = [SearchFilter]
     filterset_class = ProductFilter
@@ -249,19 +251,28 @@ class ProductCategoryListAPIView(generics.ListAPIView):
     pagination_class = None
 
 
+
 class VariationAPIView(APIView):
+    
+    @swagger_auto_schema(
+        responses={200: VariationSerializer(many=True)},
+        operation_description="Retrieve all variations or a specific variation by ID"
+    )
     def get(self, request, pk=None):
         if pk:
-            # Retrieve a single variation
             variation = get_object_or_404(Variation, pk=pk)
             serializer = VariationSerializer(variation)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            # List all variations
             variations = Variation.objects.all()
             serializer = VariationSerializer(variations, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        request_body=VariationSerializer(many=True),
+        responses={201: VariationSerializer(many=True)},
+        operation_description="Create one or multiple variations"
+    )
     def post(self, request):
         if isinstance(request.data, list):
             serializer = VariationSerializer(data=request.data, many=True)
@@ -273,6 +284,11 @@ class VariationAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        request_body=VariationSerializer,
+        responses={200: VariationSerializer},
+        operation_description="Update an existing variation by ID"
+    )
     def put(self, request, pk):
         variation = get_object_or_404(Variation, pk=pk)
         serializer = VariationSerializer(variation, data=request.data)
@@ -281,10 +297,15 @@ class VariationAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        responses={204: 'No Content'},
+        operation_description="Delete an existing variation by ID"
+    )
     def delete(self, request, pk):
         variation = get_object_or_404(Variation, pk=pk)
         variation.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 
