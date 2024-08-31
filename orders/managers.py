@@ -8,30 +8,32 @@ from django.core.exceptions import ObjectDoesNotExist
 
 
 class OrderManager(models.Manager):
+
     def get_trending_products(self):
         now = datetime.now()
-
         one_month_ago = now - timedelta(days=30)
 
         OrderItem = apps.get_model('orders', 'OrderItem')
 
-        trending_products = OrderItem.objects.filter(order__created_at__gte=one_month_ago).values('product__name').annotate(total=Count('product')).order_by('-total')[:5]
+        trending_products = OrderItem.objects.filter(order__created_at__gte=one_month_ago)\
+            .values('product__name')\
+            .annotate(total=Count('product'))\
+            .order_by('-total')[:5]
 
         return trending_products
     
-
     def get_user_orders_with_items(self, user):
-        orders = self.prefetch_related('orderitems__product').filter(buyer=user)
+        orders = self.prefetch_related('orderitems__product__productimage_set').filter(buyer=user)
         order_list = []
 
         for order in orders:
             order_data = {
                 'id': order.id,
                 'buyer': {
-                'id': order.buyer.id,
-                'name': order.buyer.get_full_name(),
-                'email': order.buyer.email,
-            },
+                    'id': order.buyer.id,
+                    'name': order.buyer.get_full_name(),
+                    'email': order.buyer.email,
+                },
                 'order_number': order.order_number,
                 'status': order.status,
                 'is_paid': order.is_paid,
@@ -54,10 +56,11 @@ class OrderManager(models.Manager):
 
             for item in order.orderitems.all():
                 product = item.product
+                product_image = product.productimage_set.first()  # Get the first image associated with the product
                 item_data = {
                     'product': product.id,
                     'name': product.name,
-                    'image': product.image.url if product.image else None,
+                    'image': product_image.image.url if product_image else None,
                     'price': product.price,
                     'quantity': item.quantity,
                     'total': item.total
@@ -77,17 +80,17 @@ class OrderManager(models.Manager):
         return order_list
 
     def list_orders(self):
-        orders = self.prefetch_related('orderitems__product').all()
+        orders = self.prefetch_related('orderitems__product__productimage_set').all()
         order_list = []
 
         for order in orders:
             order_data = {
                 'id': order.id,
                 'buyer': {
-                'id': order.buyer.id,
-                'name': order.buyer.get_full_name(),
-                'email': order.buyer.email,
-            },
+                    'id': order.buyer.id,
+                    'name': order.buyer.get_full_name(),
+                    'email': order.buyer.email,
+                },
                 'order_number': order.order_number,
                 'status': order.status,
                 'is_paid': order.is_paid,
@@ -110,10 +113,11 @@ class OrderManager(models.Manager):
 
             for item in order.orderitems.all():
                 product = item.product
+                product_image = product.productimage_set.first()  # Get the first image associated with the product
                 item_data = {
                     'product': product.id,
                     'name': product.name,
-                    'image': product.image.url if product.image else None,
+                    'image': product_image.image.url if product_image else None,
                     'price': product.price,
                     'quantity': item.quantity,
                     'total': item.total
@@ -132,14 +136,13 @@ class OrderManager(models.Manager):
 
         return order_list
     
-
     def get_order_details(self, order_id):
         Order = apps.get_model('orders', 'Order')
-        order = Order.objects.prefetch_related('orderitems__product').filter(id=order_id).first()
-        
+        order = Order.objects.prefetch_related('orderitems__product__productimage_set').filter(id=order_id).first()
+
         if not order:
             raise Order.DoesNotExist("Order not found")
-        
+
         order_data = {
             'id': order.id,
             'buyer': {
@@ -151,11 +154,11 @@ class OrderManager(models.Manager):
             'status': order.status,
             'is_paid': order.is_paid,
             'shipping_address': {
-                    'id': order.shipping_address.id,
-                    'apartment_address': order.shipping_address.apartment_address,
-                    'street': order.shipping_address.street_address,
-                    'city': order.shipping_address.city,
-                    'country': order.shipping_address.country.name,
+                'id': order.shipping_address.id,
+                'apartment_address': order.shipping_address.apartment_address,
+                'street': order.shipping_address.street_address,
+                'city': order.shipping_address.city,
+                'country': order.shipping_address.country.name,
             },
             'created_at': order.created_at,
             'orderitems': [],
@@ -169,10 +172,11 @@ class OrderManager(models.Manager):
 
         for item in order.orderitems.all():
             product = item.product
+            product_image = product.productimage_set.first()  # Get the first image associated with the product
             item_data = {
                 'product': product.id,
                 'name': product.name,
-                'image': product.image.url if product.image else None,
+                'image': product_image.image.url if product_image else None,
                 'price': product.price,
                 'quantity': item.quantity,
                 'total': item.total
@@ -189,18 +193,17 @@ class OrderManager(models.Manager):
 
         return order_data
 
-    
     def get_buyer_order_details(self, user, order_id):
         try:
-            order = self.prefetch_related('orderitems__product').get(id=order_id, buyer=user)
+            order = self.prefetch_related('orderitems__product__productimage_set').get(id=order_id, buyer=user)
             order_items = order.orderitems.all()
 
             order_data = {
                 'id': order.id,
                 'buyer': {
-                'id': order.buyer.id,
-                'name': order.buyer.get_full_name(),
-                'email': order.buyer.email,
+                    'id': order.buyer.id,
+                    'name': order.buyer.get_full_name(),
+                    'email': order.buyer.email,
                 },
                 'order_number': order.order_number,
                 'status': order.status,
@@ -218,14 +221,15 @@ class OrderManager(models.Manager):
 
             total_amount = Decimal(0)
             discount = Decimal(0)
-            tax_rate = Decimal(0.10)  
+            tax_rate = Decimal(0.10)
 
             for item in order_items:
                 product = item.product
+                product_image = product.productimage_set.first() 
                 item_data = {
                     'product': product.id,
                     'name': product.name,
-                    'image': product.image.url if product.image else None,
+                    'image': product_image.image.url if product_image else None,
                     'price': product.price,
                     'quantity': item.quantity,
                     'total': item.total
