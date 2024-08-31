@@ -117,10 +117,6 @@ class VariationSerializer(serializers.ModelSerializer):
 
 
 
-
-
-
-
 class ProductDetailSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField()
     variations = serializers.SerializerMethodField()
@@ -201,11 +197,14 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
     def update(self, instance, validated_data):
         image_files = validated_data.pop('image_files', [])
-        
+
+        # Only delete existing images if there are new image_files provided
         if image_files:
-            instance.images.all().delete()
-            for image_file in image_files:
-                ProductImage.objects.create(product=instance, image=image_file)
+            for image in instance.images.all():
+                image.delete()
+
+        for image_file in image_files:
+            ProductImage.objects.create(product=instance, image=image_file)
 
         return super().update(instance, validated_data)
 
