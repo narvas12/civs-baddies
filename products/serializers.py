@@ -120,7 +120,16 @@ class VariationSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField()
     variations = serializers.SerializerMethodField()
-    images = ProductImageSerializer(many=True, read_only=True)  # Include images here
+    images = serializers.SerializerMethodField()  # Use SerializerMethodField to handle images
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'product_tag', 'category', 'name', 'slug', 'desc', 
+            'price', 'discounted_percentage', 'quantity', 
+            'initial_stock_quantity', 'is_suspended', 'created_at', 
+            'updated_at', 'variations', 'images'  # Include images field here
+        ]
 
     def get_category(self, obj):
         if obj.category:
@@ -137,14 +146,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         variations = obj.variations.all()  # Assuming you have a related name 'variations' in the Variation model
         return VariationSerializer(variations, many=True).data
 
-    class Meta:
-        model = Product
-        fields = [
-            'id', 'product_tag', 'category', 'name', 'slug', 'desc', 
-            'price', 'discounted_percentage', 'quantity', 
-            'initial_stock_quantity', 'is_suspended', 'created_at', 
-            'updated_at', 'variations', 'images'  # Include images field here
-        ]
+    def get_images(self, obj):
+        # Access related ProductImage instances through the default related name 'productimage_set'
+        return [image.image.url for image in obj.productimage_set.all()]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Add image URLs to the representation
+        representation['images'] = self.get_images(instance)
+        return representation
+
 
  
 
@@ -152,10 +163,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
     category_id = serializers.IntegerField(write_only=True, required=True)
-    images = ProductImageSerializer(many=True, read_only=True)
-    image_files = serializers.ListField(
-        child=serializers.ImageField(), write_only=True, required=False
-    )
+    images = serializers.SerializerMethodField()  # Use SerializerMethodField to handle images
 
     class Meta:
         model = Product
@@ -198,18 +206,18 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     def update(self, instance, validated_data):
         image_files = validated_data.pop('image_files', [])
 
-        # Only delete existing images if there are new image_files provided
         if image_files:
-            for image in instance.images.all():
-                image.delete()
+            # Delete existing images if new ones are provided
+            instance.productimage_set.all().delete()
 
         for image_file in image_files:
             ProductImage.objects.create(product=instance, image=image_file)
 
         return super().update(instance, validated_data)
 
-    def get_image_urls(self, obj):
-        return [image.image.url for image in obj.images.all()]
+    def get_images(self, obj):
+        # Access related ProductImage instances through the default related name 'productimage_set'
+        return [image.image.url for image in obj.productimage_set.all()]
 
     def generate_unique_slug(self, name, product_tag):
         cleaned_name = name.replace("'", "")
@@ -223,6 +231,14 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
             counter += 1
 
         return slug
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Add image URLs to the representation
+        representation['images'] = self.get_images(instance)
+        return representation
+
+
 
 
 class ProductDeleteSerializer(serializers.Serializer):
