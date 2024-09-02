@@ -159,15 +159,14 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
  
 
-
 class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
     category_id = serializers.IntegerField(write_only=True, required=True)
-    images = ProductImageSerializer(many=True, read_only=True)  # Directly use ProductImageSerializer for images
+    product_images = ProductImageSerializer(many=True, read_only=True)  # Add this line to include product images in the response
 
     class Meta:
         model = Product
-        fields = ['product_tag', 'name', 'slug', 'desc' 'category', 'price', 'quantity', 'initial_stock_quantity', 'is_suspended', 'images']
+        fields = '__all__'
         extra_kwargs = {
             'slug': {'required': False},
             'category': {'read_only': True},
@@ -194,11 +193,9 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
         product = super().create(validated_data)
 
-        # Create ProductImage instances
         for image_file in image_files:
             ProductImage.objects.create(product=product, image=image_file)
 
-        # Create Variation instances
         for variation_data in variations_data:
             variation_data['product_variant'] = product
             Variation.objects.create(**variation_data)
@@ -212,7 +209,6 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
             # Delete existing images if new ones are provided
             instance.productimage_set.all().delete()
 
-        # Create new ProductImage instances
         for image_file in image_files:
             ProductImage.objects.create(product=instance, image=image_file)
 
@@ -233,8 +229,89 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # The images field is automatically populated by the ProductImageSerializer
+        # The images should now be included in the representation
+        representation['images'] = [img['image_url'] for img in representation['product_images']]
         return representation
+
+
+
+# class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
+#     variations = VariationSerializer(many=True, required=False)
+#     category_id = serializers.IntegerField(write_only=True, required=True)
+#     images = serializers.SerializerMethodField()  # Use SerializerMethodField to handle images
+
+#     class Meta:
+#         model = Product
+#         fields = '__all__'
+#         extra_kwargs = {
+#             'slug': {'required': False},
+#             'category': {'read_only': True},
+#         }
+
+#     def create(self, validated_data):
+#         variations_data = validated_data.pop('variations', [])
+#         category_id = validated_data.pop('category_id', None)
+#         image_files = validated_data.pop('image_files', [])
+
+#         if category_id:
+#             try:
+#                 category = ProductCategory.objects.get(id=category_id)
+#                 validated_data['category'] = category
+#             except ProductCategory.DoesNotExist:
+#                 raise serializers.ValidationError("Invalid category ID provided.")
+#         else:
+#             raise serializers.ValidationError("Category ID is required.")
+
+#         name = validated_data.get('name')
+#         product_tag = validated_data.get('product_tag', 'TS')
+#         slug = self.generate_unique_slug(name, product_tag)
+#         validated_data['slug'] = slug
+
+#         product = super().create(validated_data)
+
+#         for image_file in image_files:
+#             ProductImage.objects.create(product=product, image=image_file)
+
+#         for variation_data in variations_data:
+#             variation_data['product_variant'] = product
+#             Variation.objects.create(**variation_data)
+
+#         return product
+
+#     def update(self, instance, validated_data):
+#         image_files = validated_data.pop('image_files', [])
+
+#         if image_files:
+#             # Delete existing images if new ones are provided
+#             instance.productimage_set.all().delete()
+
+#         for image_file in image_files:
+#             ProductImage.objects.create(product=instance, image=image_file)
+
+#         return super().update(instance, validated_data)
+
+#     def get_images(self, obj):
+#         # Access related ProductImage instances through the default related name 'productimage_set'
+#         return [image.image.url for image in obj.productimage_set.all()]
+
+#     def generate_unique_slug(self, name, product_tag):
+#         cleaned_name = name.replace("'", "")
+#         base_slug = cleaned_name.lower().replace(' ', '-')
+#         random_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
+#         slug = f"{base_slug}-{product_tag}-{random_chars}"
+
+#         counter = 1
+#         while Product.objects.filter(slug=slug).exists():
+#             slug = f"{base_slug}-{product_tag}-{random_chars}-{counter}"
+#             counter += 1
+
+#         return slug
+
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         # Add image URLs to the representation
+#         representation['images'] = self.get_images(instance)
+#         return representation
 
 
 
