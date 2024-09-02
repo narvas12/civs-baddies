@@ -163,7 +163,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
     category_id = serializers.IntegerField(write_only=True, required=True)
-    images = serializers.SerializerMethodField()  # Use SerializerMethodField to handle images
+    images = ProductImageSerializer(many=True, read_only=True)  # Directly use ProductImageSerializer for images
 
     class Meta:
         model = Product
@@ -194,9 +194,11 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
         product = super().create(validated_data)
 
+        # Create ProductImage instances
         for image_file in image_files:
             ProductImage.objects.create(product=product, image=image_file)
 
+        # Create Variation instances
         for variation_data in variations_data:
             variation_data['product_variant'] = product
             Variation.objects.create(**variation_data)
@@ -210,14 +212,11 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
             # Delete existing images if new ones are provided
             instance.productimage_set.all().delete()
 
+        # Create new ProductImage instances
         for image_file in image_files:
             ProductImage.objects.create(product=instance, image=image_file)
 
         return super().update(instance, validated_data)
-
-    def get_images(self, obj):
-        # Access related ProductImage instances through the default related name 'productimage_set'
-        return [image.image.url for image in obj.productimage_set.all()]
 
     def generate_unique_slug(self, name, product_tag):
         cleaned_name = name.replace("'", "")
@@ -234,8 +233,7 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Add image URLs to the representation
-        representation['images'] = self.get_images(instance)
+        # The images field is automatically populated by the ProductImageSerializer
         return representation
 
 
