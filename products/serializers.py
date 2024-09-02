@@ -229,8 +229,11 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # The images should now be included in the representation
-        representation['images'] = [img['image_url'] for img in representation['product_images']]
+
+        if 'product_images' in representation:
+            representation['images'] = [img['image_url'] for img in representation['product_images']]
+        else:
+            representation['images'] = [] 
         return representation
 
 
