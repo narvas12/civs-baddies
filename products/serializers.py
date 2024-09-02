@@ -162,7 +162,10 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
     variations = VariationSerializer(many=True, required=False)
     category_id = serializers.IntegerField(write_only=True, required=True)
-    product_images = ProductImageSerializer(many=True, read_only=True)  # Add this line to include product images in the response
+    product_images = ProductImageSerializer(many=True, read_only=True)  
+    image_files = serializers.ListField(  # Add this line to handle image uploads
+        child=serializers.ImageField(), write_only=True, required=True
+    )
 
     class Meta:
         model = Product
@@ -229,11 +232,7 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-
-        if 'product_images' in representation:
-            representation['images'] = [img['image_url'] for img in representation['product_images']]
-        else:
-            representation['images'] = [] 
+        representation['images'] = [img['image_url'] for img in instance.productimage_set.all()]
         return representation
 
 
