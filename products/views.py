@@ -77,6 +77,7 @@ class ProductAPIView(APIView):
         serializer = ProductSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         product = serializer.save()
+        print(serializer.data)
         return Response({
             'message': 'Product created successfully',
             'product': serializer.data
