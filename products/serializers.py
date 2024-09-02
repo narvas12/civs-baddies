@@ -152,7 +152,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Add image URLs to the representation
+
         representation['images'] = self.get_images(instance)
         return representation
 
@@ -232,7 +232,9 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['images'] = [img['image_url'] for img in instance.productimage_set.all()]
+
+        representation['images'] = [img.image.url for img in instance.productimage_set.all()]
+        
         return representation
 
 
