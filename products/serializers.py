@@ -167,7 +167,7 @@ class ProductSerializer(serializers.ModelSerializer, ImageHandlingMixin):
 
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['product_tag', 'name', 'slug', 'desc' 'category', 'price', 'quantity', 'initial_stock_quantity', 'is_suspended', 'images']
         extra_kwargs = {
             'slug': {'required': False},
             'category': {'read_only': True},
