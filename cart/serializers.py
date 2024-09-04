@@ -36,10 +36,12 @@ class CartItemSerializer(serializers.ModelSerializer):
     quantity = serializers.IntegerField()
     discounted_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     discount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    color = serializers.CharField(source='color.name', read_only=True)
+    size = serializers.CharField(source='size.name', read_only=True)
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'total_price', 'quantity', 'discounted_price', 'discount']
+        fields = ['id', 'product', 'total_price', 'quantity', 'discounted_price', 'discount', 'color', 'size']
 
 
 class WishlistItemSerializer(serializers.ModelSerializer):

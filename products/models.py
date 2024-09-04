@@ -78,7 +78,7 @@ class Size(models.Model):
 class Color(models.Model):
     name = models.CharField(max_length=100)
     quantity = models.PositiveIntegerField(default=0)
-    sizes = models.ManyToManyField(Size, blank=True)  # ManyToManyField to Size
+    sizes = models.ManyToManyField(Size, blank=True)
 
     def __str__(self):
         return self.name
@@ -86,7 +86,8 @@ class Color(models.Model):
 
 class Variation(models.Model):
     product_variant = models.ForeignKey(Product, related_name='variations', on_delete=models.CASCADE, null=True, blank=True)
-    colors = models.ManyToManyField(Color, related_name='variations', blank=True)  # ManyToManyField to Color
+    image = models.ForeignKey(ProductImage, related_name='variations', on_delete=models.CASCADE)
+    colors = models.ManyToManyField(Color, related_name='variations', blank=True)  
     price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     def __str__(self):

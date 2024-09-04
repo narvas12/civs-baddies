@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from products.filters import ProductCategoryFilter, ProductFilter
-from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, Variation
+from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, ProductImage, Variation
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
@@ -14,7 +14,8 @@ from .serializers import (
     LatestArivalSerializer, 
     ProductCategorySerializer,
     ProductDeleteSerializer,
-    ProductDetailSerializer, 
+    ProductDetailSerializer,
+    ProductImageSerializer, 
     ProductSerializer, 
     SupercategoryCreateSerializer, 
     SupercategorySerializer, 
@@ -253,6 +254,24 @@ class ProductCategoryListAPIView(generics.ListAPIView):
 
 
 
+class ProductImageListView(generics.ListAPIView):
+    serializer_class = ProductImageSerializer
+
+    def get_queryset(self):
+        product_id = self.request.query_params.get('product_id')
+        
+        if product_id:
+            product = get_object_or_404(Product, id=product_id)
+            return ProductImage.objects.filter(product=product)
+        else:
+            return ProductImage.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
 class VariationAPIView(APIView):
     
     @swagger_auto_schema(
@@ -281,9 +300,29 @@ class VariationAPIView(APIView):
             serializer = VariationSerializer(data=request.data)
         
         if serializer.is_valid():
+            # Handling when data is a list of variations
+            if isinstance(serializer.validated_data, list):
+                for variation_data in serializer.validated_data:
+                    product = variation_data.get('product_variant')
+                    image = variation_data.get('image')
+                    
+                    if image.product != product:
+                        return Response({"error": "Selected image does not belong to the chosen product."}, 
+                                        status=status.HTTP_400_BAD_REQUEST)
+            else:  # Handling when data is a single variation
+                product = serializer.validated_data.get('product_variant')
+                image = serializer.validated_data.get('image')
+                
+                if image.product != product:
+                    return Response({"error": "Selected image does not belong to the chosen product."}, 
+                                    status=status.HTTP_400_BAD_REQUEST)
+            
+            # Save the variations
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @swagger_auto_schema(
         request_body=VariationSerializer,
@@ -294,6 +333,13 @@ class VariationAPIView(APIView):
         variation = get_object_or_404(Variation, pk=pk)
         serializer = VariationSerializer(variation, data=request.data)
         if serializer.is_valid():
+            product = serializer.validated_data['product_variant']
+            image = serializer.validated_data['image']
+            
+            if image.product != product:
+                return Response({"error": "Selected image does not belong to the chosen product."}, 
+                                status=status.HTTP_400_BAD_REQUEST)
+            
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -306,6 +352,7 @@ class VariationAPIView(APIView):
         variation = get_object_or_404(Variation, pk=pk)
         variation.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 

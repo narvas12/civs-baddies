@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from cart.models import CartItem, WishlistItem
-from products.models import Product
+from products.models import Color, Product, Size, Variation
 from users.models import CustomUser
 from .serializers import CartItemSerializer, WishlistItemSerializer
 from .utils import add_to_session_cart
@@ -34,6 +34,8 @@ class AddToCartView(APIView):
         for item in items:
             product_id = item.get('product_id')
             quantity = item.get('quantity')
+            color_id = item.get('color_id')
+            size_id = item.get('size_id')
 
             if not all([product_id, quantity]):
                 return Response({'error': 'Each item must have a product ID and quantity'}, status=status.HTTP_400_BAD_REQUEST)
@@ -43,18 +45,23 @@ class AddToCartView(APIView):
             except Product.DoesNotExist:
                 return Response({'error': f'Product with ID {product_id} not found'}, status=status.HTTP_404_NOT_FOUND)
             
+            variation_query = {'product_variant': product}
+            if color_id:
+                variation_query['colors'] = color_id
+            if size_id:
+                variation_query['size'] = size_id  # Ensure this field exists in the model
+
             try:
-                cart_item = CartItem.objects.get(user=user, product=product)
-                cart_item.quantity += int(quantity)
-                cart_item.active = True
-                cart_item.save()
-            except CartItem.DoesNotExist:
-                cart_item = CartItem.objects.create(user=user, product=product, quantity=int(quantity), active=True)
+                variation = Variation.objects.get(**variation_query)
+            except Variation.DoesNotExist:
+                return Response({'error': 'No matching variation found'}, status=status.HTTP_404_NOT_FOUND)
             
+            # Proceed with adding the item to the cart
+            cart_item = CartItem.objects.create(user=user, product=product, variation=variation, quantity=quantity)
             added_items.append(cart_item)
 
-        serializer = CartItemSerializer(added_items, many=True)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({'added_items': added_items}, status=status.HTTP_201_CREATED)
+
 
 
 

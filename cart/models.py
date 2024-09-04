@@ -1,5 +1,5 @@
 from django.db import models
-from products.models import Product, Variation
+from products.models import Color, Product, Size, Variation
 from users.models import CustomUser
 from rest_framework.validators import ValidationError
 
@@ -10,6 +10,8 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     variation = models.ForeignKey(Variation, on_delete=models.DO_NOTHING, default="", null=True, blank=True)
+    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)
+    size = models.ForeignKey(Size, on_delete=models.SET_NULL, null=True, blank=True)
 
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discounted_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -19,7 +21,6 @@ class CartItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-
         self.total_price = self.quantity * self.product.price
 
         if self.product.discounted_percentage:
@@ -36,6 +37,7 @@ class CartItem(models.Model):
         if self.quantity <= 0:
             raise ValidationError('Quantity must be a positive integer.')
         return self.quantity
+
         
 
 
