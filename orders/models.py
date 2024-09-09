@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from orders.managers import OrderManager
-from products.models import Product, Variation
+from products.models import Color, Product, Size, Variation
 from users.models import Address, CustomUser
 from users.models import Address, CustomUser
 
@@ -66,7 +66,9 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name="orderitems", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    variation = models.ForeignKey(Variation, on_delete=models.SET_NULL, null=True, blank=True)  # Link to variation
+    variation = models.ForeignKey(Variation, on_delete=models.SET_NULL, null=True, blank=True)  
+    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)  
+    size = models.ForeignKey(Size, on_delete=models.SET_NULL, null=True, blank=True)  
     quantity = models.PositiveIntegerField()
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -75,16 +77,19 @@ class OrderItem(models.Model):
         return self.quantity * self.product.price
 
     @staticmethod
-    def create_order_item(order, product, quantity, variation=None):
+    def create_order_item(order, product, quantity, variation=None, color=None, size=None):
         total = quantity * product.price  
         order_item = OrderItem(
             order=order,
             product=product,
             quantity=quantity,
             total=total,
-            variation=variation  # Save the variation to the order item
+            variation=variation,
+            color=color,  
+            size=size     
         )
         return order_item
+
     
 
 

@@ -30,10 +30,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_description = serializers.CharField(source='product.description', read_only=True)
     product_image = serializers.ImageField(source='product.image', read_only=True)
     variation = VariationDetailSerializer()
+    color = serializers.CharField(source='color.name', read_only=True)  # Add color to the serializer
+    size = serializers.CharField(source='size.name', read_only=True)    # Add size to the serializer
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product', 'product_name', 'product_description', 'product_image', 'quantity', 'total', 'variation']
+        fields = ['id', 'order', 'product', 'product_name', 'product_description', 'product_image', 'quantity', 'total', 'variation', 'color', 'size']
+
 
 
 

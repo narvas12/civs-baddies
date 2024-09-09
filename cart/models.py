@@ -13,15 +13,17 @@ class CartItem(models.Model):
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)
     size = models.ForeignKey(Size, on_delete=models.SET_NULL, null=True, blank=True)
 
+
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discounted_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
     abandoned = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        self.total_price = self.quantity * self.product.price
+        self.total_price   = self.quantity * self.product.price
 
         if self.product.discounted_percentage:
             discount_percentage = self.product.discounted_percentage / 100
@@ -33,10 +35,10 @@ class CartItem(models.Model):
 
         super().save(*args, **kwargs)  
 
-    def clean_quantity(self):
-        if self.quantity <= 0:
-            raise ValidationError('Quantity must be a positive integer.')
-        return self.quantity
+        def clean_quantity(self):
+            if self.quantity <= 0:
+                raise ValidationError('Quantity must be a positive integer.')
+            return self.quantity
 
         
 

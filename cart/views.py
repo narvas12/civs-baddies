@@ -22,45 +22,47 @@ class AddToCartView(APIView):
     def post(self, request):
         user = request.user
         items = request.data
-        
-        if not user.is_authenticated:
-            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-        
+
         if not isinstance(items, list) or not items:
             return Response({'error': 'A non-empty items array is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         added_items = []
+        cart_items = []
 
         for item in items:
-            product_id = item.get('product_id')
+            product, variation = self.get_product_and_variation(item)
+            if isinstance(product, Response) or isinstance(variation, Response):
+                return product if isinstance(product, Response) else variation
+
             quantity = item.get('quantity')
-            color_id = item.get('color_id')
-            size_id = item.get('size_id')
+            cart_items.append(CartItem(user=user, product=product, variation=variation, quantity=quantity))
 
-            if not all([product_id, quantity]):
-                return Response({'error': 'Each item must have a product ID and quantity'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            try:
-                product = Product.objects.get(pk=product_id)
-            except Product.DoesNotExist:
-                return Response({'error': f'Product with ID {product_id} not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-            variation_query = {'product_variant': product}
-            if color_id:
-                variation_query['colors'] = color_id
-            if size_id:
-                variation_query['size'] = size_id  # Ensure this field exists in the model
+        CartItem.objects.bulk_create(cart_items)
+        return Response({'message': 'Items successfully added to cart.'}, status=status.HTTP_201_CREATED)
 
-            try:
-                variation = Variation.objects.get(**variation_query)
-            except Variation.DoesNotExist:
-                return Response({'error': 'No matching variation found'}, status=status.HTTP_404_NOT_FOUND)
-            
-            # Proceed with adding the item to the cart
-            cart_item = CartItem.objects.create(user=user, product=product, variation=variation, quantity=quantity)
-            added_items.append(cart_item)
+    def get_product_and_variation(self, item):
+        product_id = item.get('product_id')
+        color_id = item.get('color_id')
+        size_id = item.get('size_id')
 
-        return Response({'added_items': added_items}, status=status.HTTP_201_CREATED)
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return Response({'error': f'Product with ID {product_id} not found'}, status=status.HTTP_404_NOT_FOUND), None
+
+        try:
+            # Fetch the color that has the selected size
+            color = Color.objects.get(pk=color_id, sizes__id=size_id)
+        except Color.DoesNotExist:
+            return Response({'error': 'Color or size combination not found'}, status=status.HTTP_404_NOT_FOUND), None
+
+        try:
+            # Fetch the variation that contains the selected color
+            variation = Variation.objects.get(product_variant=product, colors=color)
+        except Variation.DoesNotExist:
+            return Response({'error': 'Variation not found with the specified options'}, status=status.HTTP_404_NOT_FOUND), None
+
+        return product, variation
 
 
 

@@ -65,7 +65,7 @@ class SizeSerializer(serializers.ModelSerializer):
 
 
 class ColorSerializer(serializers.ModelSerializer):
-    sizes = SizeSerializer(many=True, required=False)  # Nested SizeSerializer
+    sizes = SizeSerializer(many=True, required=False)  
 
     class Meta:
         model = Color
@@ -117,7 +117,7 @@ class VariationSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         colors_with_sizes = []
 
-        # Convert image to URL
+
         if instance.image:
             representation['image'] = instance.image.image.url
 

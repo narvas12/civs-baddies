@@ -56,7 +56,7 @@ class OrderManager(models.Manager):
 
             for item in order.orderitems.all():
                 product = item.product
-                product_image = product.productimage_set.first()  # Get the first image associated with the product
+                product_image = product.productimage_set.first() 
                 item_data = {
                     'product': product.id,
                     'name': product.name,
@@ -73,7 +73,7 @@ class OrderManager(models.Manager):
 
             order_data['total_amount'] = total_amount
             order_data['discount'] = discount_amount
-            order_data['tax'] = total_amount * Decimal('0.10')  # Assuming a flat tax rate of 10%
+            order_data['tax'] = total_amount * Decimal('0.10')  
 
             order_list.append(order_data)
 

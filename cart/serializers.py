@@ -44,6 +44,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'total_price', 'quantity', 'discounted_price', 'discount', 'color', 'size']
 
 
+
 class WishlistItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True) 
     class Meta:
