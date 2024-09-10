@@ -23,6 +23,7 @@ class AddToCartView(APIView):
         user = request.user
         items = request.data
 
+
         if not isinstance(items, list) or not items:
             return Response({'error': 'A non-empty items array is required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -33,35 +34,41 @@ class AddToCartView(APIView):
             if isinstance(product, Response) or isinstance(variation, Response):
                 return product if isinstance(product, Response) else variation
 
-            color_name = self.get_color_name(item)
-            size_name = self.get_size_name(item)
+
+            color = item.get('color')  
+            size = item.get('size')   
+
+            if not color:
+                return Response({'error': 'Color is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not size:
+                return Response({'error': 'Size is required'}, status=status.HTTP_400_BAD_REQUEST)
+
 
             cart_items.append(CartItem(
                 user=user,
                 product=product,
                 variation=variation,
                 quantity=item.get('quantity'),
-                color=color_name,   # Store color as string
-                size=size_name      # Store size as string
+                color=color,  
+                size=size     
+                
             ))
 
-        # Create the cart items in the database
+
         CartItem.objects.bulk_create(cart_items)
 
-        # Query the newly created cart items for this user
         new_cart_items = CartItem.objects.filter(user=user).order_by('-id')[:len(cart_items)]
 
-        # Serialize the cart items
         serializer = CartItemSerializer(new_cart_items, many=True)
 
-        # Return the serialized cart items in the response
         return Response({
             'message': 'Items successfully added to cart.',
             'cart_items': serializer.data
         }, status=status.HTTP_201_CREATED)
 
     def get_product_and_variation(self, item):
-        """Helper method to get product and variation from item."""
+        """Helper method to get product and variation from the item."""
         product_id = item.get('product_id')
         variation_id = item.get('variation_id')
 
@@ -78,28 +85,6 @@ class AddToCartView(APIView):
                 return Response({'error': 'Variation not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return product, variation
-
-    def get_color_name(self, item):
-        color_id = item.get('color_id')
-        if color_id:
-            try:
-                color = Color.objects.get(pk=color_id)
-                return color.name  # Return color name as string
-            except Color.DoesNotExist:
-                raise Response({'error': 'Color not found'}, status=status.HTTP_404_NOT_FOUND)
-        return None
-
-    def get_size_name(self, item):
-        size_id = item.get('size_id')
-        if size_id:
-            try:
-                size = Size.objects.get(pk=size_id)
-                return size.name  # Return size name as string
-            except Size.DoesNotExist:
-                raise Response({'error': 'Size not found'}, status=status.HTTP_404_NOT_FOUND)
-        return None
-
-
 
 
 

@@ -179,6 +179,8 @@ class OrderManager(models.Manager):
                 'image': product_image.image.url if product_image else None,
                 'price': product.price,
                 'quantity': item.quantity,
+                'color': item.color,
+                'size': item.size,
                 'total': item.total
             }
             order_data['orderitems'].append(item_data)
