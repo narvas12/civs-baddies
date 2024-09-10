@@ -66,9 +66,9 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name="orderitems", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    variation = models.ForeignKey(Variation, on_delete=models.SET_NULL, null=True, blank=True)  
-    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)  
-    size = models.ForeignKey(Size, on_delete=models.SET_NULL, null=True, blank=True)  
+    
+    color = models.CharField(max_length=100, null=True, blank=True)  # Store color name as string
+    size = models.CharField(max_length=100, null=True, blank=True)   # Store size name as string
     quantity = models.PositiveIntegerField()
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -77,18 +77,18 @@ class OrderItem(models.Model):
         return self.quantity * self.product.price
 
     @staticmethod
-    def create_order_item(order, product, quantity, variation=None, color=None, size=None):
-        total = quantity * product.price  
+    def create_order_item(order, product, quantity, color=None, size=None):
+        total = quantity * product.price
         order_item = OrderItem(
             order=order,
             product=product,
             quantity=quantity,
             total=total,
-            variation=variation,
-            color=color,  
-            size=size     
+            color=color,
+            size=size
         )
         return order_item
+
 
     
 

@@ -45,7 +45,8 @@ class OrderCreateAPIView(APIView):
         if order_serializer.is_valid():
             order_instance = order_serializer.save()
             products = self.create_order_items(order_instance, cart_items)
-            cart_items.delete()
+
+            # cart_items.delete()
 
             # Send order confirmation email
             send_order_confirmation_email(
@@ -87,7 +88,7 @@ class OrderCreateAPIView(APIView):
                 order=order,
                 product=cart_item.product,
                 quantity=cart_item.quantity,
-                variation=cart_item.variation,
+
                 color=cart_item.color,    # Include color
                 size=cart_item.size      # Include size
             )
@@ -101,8 +102,8 @@ class OrderCreateAPIView(APIView):
                 'name': cart_item.product.name,
                 'price': cart_item.product.price,
                 'image_url': image_url,
-                'color': cart_item.color.name if cart_item.color else None,  # Include color details
-                'size': cart_item.size.name if cart_item.size else None      # Include size details
+                'color': cart_item.color,  # Include color details
+                'size': cart_item    # Include size details
             })
 
         return products

@@ -9,11 +9,9 @@ class CartItem(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='cart_items', null=True, blank=True, default="")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    variation = models.ForeignKey(Variation, on_delete=models.DO_NOTHING, default="", null=True, blank=True)
-    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)
-    size = models.ForeignKey(Size, on_delete=models.SET_NULL, null=True, blank=True)
-
-
+    variation = models.ForeignKey(Variation, on_delete=models.DO_NOTHING, null=True, blank=True)  
+    color = models.CharField(max_length=50, null=True, blank=True)  
+    size = models.CharField(max_length=50, null=True, blank=True) 
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discounted_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -23,7 +21,7 @@ class CartItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        self.total_price   = self.quantity * self.product.price
+        self.total_price = self.quantity * self.product.price
 
         if self.product.discounted_percentage:
             discount_percentage = self.product.discounted_percentage / 100
@@ -35,10 +33,10 @@ class CartItem(models.Model):
 
         super().save(*args, **kwargs)  
 
-        def clean_quantity(self):
-            if self.quantity <= 0:
-                raise ValidationError('Quantity must be a positive integer.')
-            return self.quantity
+    def clean_quantity(self):
+        if self.quantity <= 0:
+            raise ValidationError('Quantity must be a positive integer.')
+        return self.quantity
 
         
 

@@ -5,38 +5,15 @@ from users.serializers import CustomUserSerializer
 from .models import Order, OrderItem
 
 
-class VariationDetailSerializer(serializers.ModelSerializer):
-    colors = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Variation
-        fields = ['id', 'product_variant', 'colors']
-
-    def get_colors(self, obj):
-        return [
-            {
-                "color_name": color.name,
-                "sizes": [
-                    {
-                        "size_name": size.name,
-                        "quantity": size.quantity
-                    } for size in color.sizes.all()
-                ]
-            } for color in obj.colors.all()
-        ]
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_description = serializers.CharField(source='product.description', read_only=True)
     product_image = serializers.ImageField(source='product.image', read_only=True)
-    variation = VariationDetailSerializer()
-    color = serializers.CharField(source='color.name', read_only=True)  # Add color to the serializer
-    size = serializers.CharField(source='size.name', read_only=True)    # Add size to the serializer
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product', 'product_name', 'product_description', 'product_image', 'quantity', 'total', 'variation', 'color', 'size']
-
+        fields = ['id', 'order', 'product', 'product_name', 'product_description', 'product_image', 'quantity', 'total', 'color', 'size']
 
 
 

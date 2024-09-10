@@ -26,7 +26,6 @@ class AddToCartView(APIView):
         if not isinstance(items, list) or not items:
             return Response({'error': 'A non-empty items array is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        added_items = []
         cart_items = []
 
         for item in items:
@@ -34,37 +33,72 @@ class AddToCartView(APIView):
             if isinstance(product, Response) or isinstance(variation, Response):
                 return product if isinstance(product, Response) else variation
 
-            quantity = item.get('quantity')
-            cart_items.append(CartItem(user=user, product=product, variation=variation, quantity=quantity))
+            color_name = self.get_color_name(item)
+            size_name = self.get_size_name(item)
 
+            cart_items.append(CartItem(
+                user=user,
+                product=product,
+                variation=variation,
+                quantity=item.get('quantity'),
+                color=color_name,   # Store color as string
+                size=size_name      # Store size as string
+            ))
+
+        # Create the cart items in the database
         CartItem.objects.bulk_create(cart_items)
-        return Response({'message': 'Items successfully added to cart.'}, status=status.HTTP_201_CREATED)
+
+        # Query the newly created cart items for this user
+        new_cart_items = CartItem.objects.filter(user=user).order_by('-id')[:len(cart_items)]
+
+        # Serialize the cart items
+        serializer = CartItemSerializer(new_cart_items, many=True)
+
+        # Return the serialized cart items in the response
+        return Response({
+            'message': 'Items successfully added to cart.',
+            'cart_items': serializer.data
+        }, status=status.HTTP_201_CREATED)
 
     def get_product_and_variation(self, item):
+        """Helper method to get product and variation from item."""
         product_id = item.get('product_id')
-        color_id = item.get('color_id', None) 
-        size_id = item.get('size_id', None)    
+        variation_id = item.get('variation_id')
 
         try:
             product = Product.objects.get(pk=product_id)
         except Product.DoesNotExist:
-            return Response({'error': f'Product with ID {product_id} not found'}, status=status.HTTP_404_NOT_FOUND), None
-
-        color = None
-        if color_id:
-            try:
-                color = Color.objects.get(pk=color_id, sizes__id=size_id) if size_id else Color.objects.get(pk=color_id)
-            except Color.DoesNotExist:
-                return Response({'error': 'Color or size combination not found'}, status=status.HTTP_404_NOT_FOUND), None
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
         variation = None
-        if color:
+        if variation_id:
             try:
-                variation = Variation.objects.get(product_variant=product, colors=color)
+                variation = Variation.objects.get(pk=variation_id, product=product)
             except Variation.DoesNotExist:
-                return Response({'error': 'Variation not found with the specified options'}, status=status.HTTP_404_NOT_FOUND), None
+                return Response({'error': 'Variation not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return product, variation
+
+    def get_color_name(self, item):
+        color_id = item.get('color_id')
+        if color_id:
+            try:
+                color = Color.objects.get(pk=color_id)
+                return color.name  # Return color name as string
+            except Color.DoesNotExist:
+                raise Response({'error': 'Color not found'}, status=status.HTTP_404_NOT_FOUND)
+        return None
+
+    def get_size_name(self, item):
+        size_id = item.get('size_id')
+        if size_id:
+            try:
+                size = Size.objects.get(pk=size_id)
+                return size.name  # Return size name as string
+            except Size.DoesNotExist:
+                raise Response({'error': 'Size not found'}, status=status.HTTP_404_NOT_FOUND)
+        return None
+
 
 
 
