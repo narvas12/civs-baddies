@@ -42,27 +42,30 @@ class AddToCartView(APIView):
 
     def get_product_and_variation(self, item):
         product_id = item.get('product_id')
-        color_id = item.get('color_id')
-        size_id = item.get('size_id')
+        color_id = item.get('color_id', None) 
+        size_id = item.get('size_id', None)    
 
         try:
             product = Product.objects.get(pk=product_id)
         except Product.DoesNotExist:
             return Response({'error': f'Product with ID {product_id} not found'}, status=status.HTTP_404_NOT_FOUND), None
 
-        try:
-            # Fetch the color that has the selected size
-            color = Color.objects.get(pk=color_id, sizes__id=size_id)
-        except Color.DoesNotExist:
-            return Response({'error': 'Color or size combination not found'}, status=status.HTTP_404_NOT_FOUND), None
+        color = None
+        if color_id:
+            try:
+                color = Color.objects.get(pk=color_id, sizes__id=size_id) if size_id else Color.objects.get(pk=color_id)
+            except Color.DoesNotExist:
+                return Response({'error': 'Color or size combination not found'}, status=status.HTTP_404_NOT_FOUND), None
 
-        try:
-            # Fetch the variation that contains the selected color
-            variation = Variation.objects.get(product_variant=product, colors=color)
-        except Variation.DoesNotExist:
-            return Response({'error': 'Variation not found with the specified options'}, status=status.HTTP_404_NOT_FOUND), None
+        variation = None
+        if color:
+            try:
+                variation = Variation.objects.get(product_variant=product, colors=color)
+            except Variation.DoesNotExist:
+                return Response({'error': 'Variation not found with the specified options'}, status=status.HTTP_404_NOT_FOUND), None
 
         return product, variation
+
 
 
 
