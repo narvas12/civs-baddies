@@ -23,20 +23,20 @@ class AddToCartView(APIView):
         user = request.user
         items = request.data
 
-
         if not isinstance(items, list) or not items:
             return Response({'error': 'A non-empty items array is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         cart_items = []
 
         for item in items:
-            product, variation = self.get_product_and_variation(item)
-            if isinstance(product, Response) or isinstance(variation, Response):
-                return product if isinstance(product, Response) else variation
+            product, variation_or_error = self.get_product_and_variation(item)
 
+            # Check if an error response was returned from get_product_and_variation
+            if not product:
+                return variation_or_error
 
-            color = item.get('color')  
-            size = item.get('size')   
+            color = item.get('color')
+            size = item.get('size')
 
             if not color:
                 return Response({'error': 'Color is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -44,28 +44,46 @@ class AddToCartView(APIView):
             if not size:
                 return Response({'error': 'Size is required'}, status=status.HTTP_400_BAD_REQUEST)
 
+            quantity = item.get('quantity')
+            if not quantity or int(quantity) <= 0:
+                return Response({'error': 'Quantity must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
 
-            cart_items.append(CartItem(
+            # Check if the item already exists in the cart
+            existing_cart_items = CartItem.objects.filter(
                 user=user,
                 product=product,
-                variation=variation,
-                quantity=item.get('quantity'),
-                color=color,  
-                size=size     
-                
-            ))
+                variation=variation_or_error,  # Use variation from get_product_and_variation
+                color=color,
+                size=size
+            )
 
+            if existing_cart_items.exists():
+                # Item already exists, increase the quantity of the first matching item
+                cart_item = existing_cart_items.first()
+                cart_item.quantity += int(quantity)
+                cart_item.save()
+            else:
+                # Item does not exist, create a new one
+                cart_item = CartItem(
+                    user=user,
+                    product=product,
+                    variation=variation_or_error,  # Use variation here
+                    quantity=quantity,
+                    color=color,
+                    size=size
+                )
+                cart_item.save()
 
-        CartItem.objects.bulk_create(cart_items)
+            cart_items.append(cart_item)
 
-        new_cart_items = CartItem.objects.filter(user=user).order_by('-id')[:len(cart_items)]
-
-        serializer = CartItemSerializer(new_cart_items, many=True)
+        # Serialize and return the cart items
+        serializer = CartItemSerializer(cart_items, many=True)
 
         return Response({
             'message': 'Items successfully added to cart.',
             'cart_items': serializer.data
         }, status=status.HTTP_201_CREATED)
+
 
     def get_product_and_variation(self, item):
         """Helper method to get product and variation from the item."""
@@ -75,16 +93,20 @@ class AddToCartView(APIView):
         try:
             product = Product.objects.get(pk=product_id)
         except Product.DoesNotExist:
-            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+            return None, Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
         variation = None
         if variation_id:
             try:
                 variation = Variation.objects.get(pk=variation_id, product=product)
             except Variation.DoesNotExist:
-                return Response({'error': 'Variation not found'}, status=status.HTTP_404_NOT_FOUND)
+                return None, Response({'error': 'Variation not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return product, variation
+
+
+
+
 
 
 

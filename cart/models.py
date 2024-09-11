@@ -21,22 +21,26 @@ class CartItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        # Ensure product has a price
+        if not self.product.price or self.product.price <= 0:
+            raise ValueError("Product price must be set and greater than 0 before saving the cart item.")
+
+
         self.total_price = self.quantity * self.product.price
+
 
         if self.product.discounted_percentage:
             discount_percentage = self.product.discounted_percentage / 100
             self.discounted_price = self.total_price * (1 - discount_percentage)
-            self.discount = self.total_price - self.discounted_price 
+            self.discount = self.total_price - self.discounted_price
         else:
             self.discounted_price = self.total_price
-            self.discount = 0.00 
+            self.discount = 0.00
 
-        super().save(*args, **kwargs)  
+        super().save(*args, **kwargs)
 
-    def clean_quantity(self):
-        if self.quantity <= 0:
-            raise ValidationError('Quantity must be a positive integer.')
-        return self.quantity
+
+
 
         
 
