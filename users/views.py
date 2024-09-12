@@ -68,13 +68,21 @@ class UserListView(generics.ListAPIView):
         
 
 class CreateUserAPIView(APIView):
+
     def post(self, request):
         serializer = CreateUserSerializer(data=request.data)
+        
         if serializer.is_valid():
+            
             serializer.save()
-            return Response({'message': 'User created successfully. Check your email for activation.'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            print(serializer.data)
+            return Response(
+                {"message": "User created successfully. Check your email for activation."},
+                status=status.HTTP_201_CREATED,
+            )
+        else:
 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserDetailsView(APIView):
     permission_classes = [IsAuthenticated]

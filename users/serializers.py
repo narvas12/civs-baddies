@@ -73,10 +73,14 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
             return user
         except IntegrityError as e:
-            if 'UNIQUE constraint failed: users_customuser.mobile' in str(e):
-                raise serializers.ValidationError({'mobile': 'This mobile number is already in use.'})
+            if 'UNIQUE constraint failed: users_customuser.email' in str(e):
+                raise serializers.ValidationError({"email": "This email is already in use."})
+            elif 'UNIQUE constraint failed: users_customuser.mobile' in str(e):
+                raise serializers.ValidationError({"mobile": "This mobile number is already in use."})
+            elif 'UNIQUE constraint failed: users_customuser.customer_id' in str(e):  # Add this check
+                raise serializers.ValidationError({"customer_id": "This customer ID is already in use."})
             else:
-                raise serializers.ValidationError({'non_field_errors': 'Something went wrong.'})
+                raise serializers.ValidationError({"non_field_errors": "A database error occurred."})
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
