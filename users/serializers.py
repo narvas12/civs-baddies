@@ -1,4 +1,5 @@
 import uuid
+from venv import logger
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -13,7 +14,7 @@ from django.core.validators import FileExtensionValidator
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model, authenticate
 from django.core.validators import RegexValidator
-
+from rest_framework import serializers
 cloudinary.config(
             cloud_name=settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
             api_key=settings.CLOUDINARY_STORAGE['API_KEY'],
@@ -39,53 +40,50 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class CreateUserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(max_length=100, required=True)
     email = serializers.EmailField(max_length=255, required=True)
-    mobile = serializers.CharField(max_length=11, required=True)
+    mobile = serializers.CharField(max_length=15, required=True, validators=[
+        RegexValidator(regex=r'^\d{10,15}$', message="Enter a valid mobile number.")
+    ])
 
     class Meta:
         model = CustomUser
         fields = ['full_name', 'email', 'mobile', 'password']
         extra_kwargs = {
             'password': {'write_only': True},
-            'email': {'required': True, 'unique': True}, 
-            'mobile': {'required': True, 'unique': True}, 
+            'email': {'required': True, 'unique': True},
         }
 
     def create(self, validated_data):
+        validated_data['username'] = validated_data['email']  # Set username to email
+
         try:
-            full_name = validated_data.pop('full_name')
-            email = validated_data.pop('email')
-            mobile = validated_data.pop('mobile')
-            password = validated_data.pop('password')
-
-            validated_data['username'] = email
-            validated_data['is_active'] = True 
-
-            user = CustomUser.objects.create_user(
-                full_name=full_name, email=email, mobile=mobile, password=password, **validated_data
-            )
-
-            # Generate and set activation token
+            user = CustomUser.objects.create_user(**validated_data)
             user.activation_token = str(uuid.uuid4())
             user.save()
-
-            # Send activation email
             send_activation_email(user)
-
             return user
         except IntegrityError as e:
-            if 'UNIQUE constraint failed: users_customuser.email' in str(e):
+            if 'users_customuser_username_key' in str(e):  # Check for username constraint violation
                 raise serializers.ValidationError({"email": "This email is already in use."})
-            elif 'UNIQUE constraint failed: users_customuser.mobile' in str(e):
+            elif 'users_customuser_mobile_key' in str(e):  # Check for mobile number constraint violation
                 raise serializers.ValidationError({"mobile": "This mobile number is already in use."})
-            elif 'UNIQUE constraint failed: users_customuser.customer_id' in str(e):  # Add this check
-                raise serializers.ValidationError({"customer_id": "This customer ID is already in use."})
             else:
                 raise serializers.ValidationError({"non_field_errors": "A database error occurred."})
+        except ValueError as e:
+            # Handle invalid data types or other value-related errors
+            raise serializers.ValidationError({"non_field_errors": str(e)})
+        except Exception as e:
+            # Log the error for debugging
+            logger.exception("Error creating user:", exc_info=e)
+            raise serializers.ValidationError({"non_field_errors": "An unexpected error occurred."})
+
+           
+           
+
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('full_name', 'mobile')  # Update only these fields
+        fields = ('full_name', 'mobile')  
         extra_kwargs = {'mobile': {'validators': [RegexValidator(regex=r"^\d{10,15}$", message="Enter a valid mobile number")]}}
         read_only_fields = ('email',)  
 
