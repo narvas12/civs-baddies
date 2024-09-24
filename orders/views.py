@@ -20,6 +20,7 @@ from core import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
 import logging
+from django.views.decorators.csrf import csrf_exempt
 
 
 class OrderCreateAPIView(APIView):
@@ -118,9 +119,8 @@ class OrderCreateAPIView(APIView):
 
 
 
-
-
 logger = logging.getLogger(__name__)
+
 
 class PaymentAPIView(APIView):
     def post(self, request, order_id):
@@ -314,3 +314,70 @@ class OrderStatusUpdateView(UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+    
+
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import now
+import hashlib
+import hmac
+import requests
+
+@csrf_exempt  # Disable CSRF for webhook since it's from an external source.
+def paystack_webhook(request):
+    # Ensure the request method is POST
+    if request.method == 'POST':
+        try:
+            # Load the data sent by Paystack
+            data = json.loads(request.body)
+
+            # Paystack sends the event data in a field named 'event' and the actual transaction data in 'data'
+            event_type = data.get('event')
+            event_data = data.get('data')
+
+            # Verify Paystack signature to ensure authenticity
+            paystack_secret_key = 'your_secret_key_here'  # Replace with your Paystack secret key
+            signature = request.headers.get('x-paystack-signature')
+            hash_value = hmac.new(
+                paystack_secret_key.encode(),
+                msg=request.body,
+                digestmod=hashlib.sha512
+            ).hexdigest()
+
+            if signature != hash_value:
+                return JsonResponse({"error": "Invalid signature"}, status=400)
+
+            # Process the event (example: 'charge.success')
+            if event_type == 'charge.success':
+                # Retrieve the order associated with the transaction
+                reference = event_data['reference']
+                amount = event_data['amount'] / 100  # Convert amount to decimal format (Paystack sends in kobo)
+                transaction_status = event_data['status']
+
+                try:
+                    # Find the transaction by reference
+                    transaction = Transaction.objects.get(reference=reference)
+                    transaction.status = transaction_status
+                    transaction.charged_at = now()
+                    transaction.save()
+
+                    # Update the associated order as well
+                    if transaction_status == 'success':
+                        order = transaction.order
+                        order.is_paid = True
+                        order.status = Order.COMPLETED  # Update the order status to completed
+                        order.save()
+
+                    return JsonResponse({"message": "Webhook received and processed successfully"}, status=200)
+
+                except Transaction.DoesNotExist:
+                    return JsonResponse({"error": "Transaction not found"}, status=404)
+
+            return JsonResponse({"message": "Unhandled event"}, status=200)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)

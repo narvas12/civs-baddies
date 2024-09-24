@@ -62,17 +62,17 @@ class CreateUserSerializer(serializers.ModelSerializer):
             send_activation_email(user)
             return user
         except IntegrityError as e:
-            if 'users_customuser_username_key' in str(e):  # Check for username constraint violation
+            if 'users_customuser_username_key' in str(e):  
                 raise serializers.ValidationError({"email": "This email is already in use."})
-            elif 'users_customuser_mobile_key' in str(e):  # Check for mobile number constraint violation
+            elif 'users_customuser_mobile_key' in str(e):  
                 raise serializers.ValidationError({"mobile": "This mobile number is already in use."})
             else:
                 raise serializers.ValidationError({"non_field_errors": "A database error occurred."})
         except ValueError as e:
-            # Handle invalid data types or other value-related errors
+
             raise serializers.ValidationError({"non_field_errors": str(e)})
         except Exception as e:
-            # Log the error for debugging
+
             logger.exception("Error creating user:", exc_info=e)
             raise serializers.ValidationError({"non_field_errors": "An unexpected error occurred."})
 
