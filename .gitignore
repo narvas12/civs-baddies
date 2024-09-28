@@ -1,6 +1,7 @@
 db.sqlite3
 # Environment files
 .envb
+.env
 env
 # Virtual environment
 civs_env
