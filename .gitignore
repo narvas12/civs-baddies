@@ -1,7 +1,5 @@
 db.sqlite3
 # Environment files
-<<<<<<< HEAD
-.environ
 env
 .env.local
 .env.development
