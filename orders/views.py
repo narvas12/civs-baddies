@@ -21,6 +21,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
 import logging
 from django.views.decorators.csrf import csrf_exempt
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import now
+import hashlib
+import hmac
+import requests
+
 
 
 class OrderCreateAPIView(APIView):
@@ -317,14 +325,6 @@ class OrderStatusUpdateView(UpdateAPIView):
     
 
 
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import now
-import hashlib
-import hmac
-import requests
-
 @csrf_exempt  # Disable CSRF for webhook since it's from an external source.
 def paystack_webhook(request):
     # Ensure the request method is POST
@@ -381,3 +381,201 @@ def paystack_webhook(request):
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+
+@csrf_exempt
+def flutterwave_webhook(request):
+    if request.method == 'POST':
+        try:
+            # Parse the incoming JSON request
+            data = json.loads(request.body)
+            
+            # Flutterwave sends the transaction information in the 'data' field
+            event_data = data.get('data', {})
+            transaction_status = event_data.get('status')
+            tx_ref = event_data.get('tx_ref')  # Flutterwave transaction reference
+            flw_ref = event_data.get('flw_ref')  # Flutterwave internal reference
+            amount = event_data.get('amount')
+            charged_at = event_data.get('created_at')
+
+            # Verify the signature using Flutterwave secret hash
+            flutterwave_secret_hash = settings.FLUTTERWAVE_SECRETE  # Replace with your secret key
+            signature = request.headers.get('verif-hash')
+            computed_hash = hmac.new(flutterwave_secret_hash.encode(), request.body, hashlib.sha256).hexdigest()
+
+            if signature != computed_hash:
+                return JsonResponse({"error": "Invalid signature"}, status=400)
+
+            # Find the transaction in your database using the `tx_ref` (your internal reference)
+            try:
+                transaction = Transaction.objects.get(reference=tx_ref)
+
+                # Update the transaction based on the payment status received
+                transaction.status = transaction_status
+                transaction.flw_ref = flw_ref
+                transaction.charged_at = charged_at
+                transaction.amount = amount
+                transaction.save()
+
+                # If payment was successful, update the corresponding order as well
+                if transaction_status == 'successful':
+                    order = transaction.order
+                    order.is_paid = True
+                    order.status = Order.COMPLETED  # Mark order as completed
+                    order.save()
+
+                return JsonResponse({"message": "Webhook processed successfully"}, status=200)
+
+            except Transaction.DoesNotExist:
+                return JsonResponse({"error": "Transaction not found"}, status=404)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+
+class BaseWebhook:
+    def __init__(self, request):
+        self.request = request
+        self.data = None
+        self.event_type = None
+        self.event_data = None
+
+    def load_data(self):
+        """ Load JSON data from the request body """
+        try:
+            self.data = json.loads(self.request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+
+        return None
+
+    def verify_signature(self, signature, secret, hash_function=hashlib.sha512):
+        """ Verifies the signature of the request """
+        computed_hash = hmac.new(
+            secret.encode(),
+            msg=self.request.body,
+            digestmod=hash_function
+        ).hexdigest()
+        
+        if signature != computed_hash:
+            return JsonResponse({"error": "Invalid signature"}, status=400)
+        return None
+
+    def find_transaction(self, reference):
+        """ Finds a transaction based on the reference """
+        try:
+            transaction = Transaction.objects.get(reference=reference)
+            return transaction, None
+        except Transaction.DoesNotExist:
+            return None, JsonResponse({"error": "Transaction not found"}, status=404)
+
+    def update_transaction(self, transaction, status, amount=None, charged_at=None):
+        """ Updates the transaction with new status and optional fields """
+        transaction.status = status
+        if amount:
+            transaction.amount = amount
+        if charged_at:
+            transaction.charged_at = charged_at
+        transaction.save()
+
+    def update_order(self, transaction, success_status):
+        """ Updates the order associated with the transaction """
+        if transaction.status == success_status:
+            order = transaction.order
+            order.is_paid = True
+            order.status = Order.COMPLETED
+            order.save()
+
+    def process_webhook(self):
+        """ This method should be overridden by subclasses to process specific webhook events """
+        raise NotImplementedError
+    
+
+
+
+class PaystackWebhook(BaseWebhook):
+    def process_webhook(self):
+        # Load data from request
+        response = self.load_data()
+        if response:
+            return response
+        
+        self.event_type = self.data.get('event')
+        self.event_data = self.data.get('data')
+
+        # Verify Paystack signature
+        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
+        signature = self.request.headers.get('x-paystack-signature')
+        response = self.verify_signature(signature, paystack_secret_key)
+        if response:
+            return response
+
+        # Handle 'charge.success' event
+        if self.event_type == 'charge.success':
+            reference = self.event_data.get('reference')
+            amount = self.event_data.get('amount') / 100  # Convert amount from kobo
+            transaction_status = self.event_data.get('status')
+
+            # Find the transaction
+            transaction, response = self.find_transaction(reference)
+            if response:
+                return response
+
+            # Update the transaction and order
+            self.update_transaction(transaction, transaction_status, charged_at=now())
+            self.update_order(transaction, success_status='success')
+
+            return JsonResponse({"message": "Webhook received and processed successfully"}, status=200)
+
+        return JsonResponse({"message": "Unhandled event"}, status=200)
+
+
+
+class FlutterwaveWebhook(BaseWebhook):
+    def process_webhook(self):
+        # Load data from request
+        response = self.load_data()
+        if response:
+            return response
+
+        self.event_data = self.data.get('data', {})
+        transaction_status = self.event_data.get('status')
+        tx_ref = self.event_data.get('tx_ref')  # Flutterwave transaction reference
+        flw_ref = self.event_data.get('flw_ref')  # Flutterwave internal reference
+        amount = self.event_data.get('amount')
+        charged_at = self.event_data.get('created_at')
+
+        # Verify Flutterwave signature
+        flutterwave_secret_hash = settings.FLUTTERWAVE_SECRET_KEY
+        signature = self.request.headers.get('verif-hash')
+        response = self.verify_signature(signature, flutterwave_secret_hash, hash_function=hashlib.sha256)
+        if response:
+            return response
+
+        # Find the transaction
+        transaction, response = self.find_transaction(tx_ref)
+        if response:
+            return response
+
+        # Update the transaction and order
+        self.update_transaction(transaction, transaction_status, amount=amount, charged_at=charged_at)
+        self.update_order(transaction, success_status='successful')
+
+        return JsonResponse({"message": "Webhook processed successfully"}, status=200)
+
+
+@csrf_exempt
+def paystack_webhook(request):
+    """ Handle Paystack webhook """
+    handler = PaystackWebhook(request)
+    return handler.process_webhook()
+
+@csrf_exempt
+def flutterwave_webhook(request):
+    """ Handle Flutterwave webhook """
+    handler = FlutterwaveWebhook(request)
+    return handler.process_webhook()

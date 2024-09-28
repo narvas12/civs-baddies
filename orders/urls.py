@@ -10,6 +10,7 @@ from orders.views import (
     PaymentAPIView,
     TrendingProducts,
     UserOrdersView,
+    flutterwave_webhook,
     paystack_webhook,
 )
 
@@ -26,6 +27,8 @@ urlpatterns = [
     path('orders/<int:order_id>/items/', OrderItemsListView.as_view()),
     path('orders/admin_details/<int:id>/', AdminOrderDetailView.as_view()),
     path('orders/<int:id>/status/update/', OrderStatusUpdateView.as_view()),
+    
+    path('flutterwave/webhook/', flutterwave_webhook, name='flutterwave_webhook'),
     path('paystack-webhook/', paystack_webhook, name='paystack-webhook'),
 ]
 
