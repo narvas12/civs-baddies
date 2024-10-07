@@ -87,6 +87,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         extra_kwargs = {'mobile': {'validators': [RegexValidator(regex=r"^\d{10,15}$", message="Enter a valid mobile number")]}}
         read_only_fields = ('email',)  
 
+
 class UserMiniSerializer(serializers.ModelSerializer):
     profile_picture = serializers.ImageField(source="profile.avatar")
     gender = serializers.CharField(source="profile.gender")
@@ -96,7 +97,6 @@ class UserMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ["username", "avatar", "gender", "email"]
-
 
 
 class CreateAdminSerializer(serializers.ModelSerializer):
@@ -179,8 +179,6 @@ class LoginSerializer(serializers.ModelSerializer):
             "refresh_token": str(tokens.get('refresh')),
             "is_staff": is_staff,  # Include staff status in the response
         }
-        
-        
         
         
 class LogoutSerializer(serializers.Serializer):

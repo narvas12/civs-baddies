@@ -10,7 +10,7 @@ from users.models import CustomUser
 from .serializers import CartItemSerializer, WishlistItemSerializer
 from .utils import add_to_session_cart
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import  AllowAny
+from rest_framework.permissions import  AllowAny, IsAuthenticatedOrReadOnly
 
 
 
@@ -31,7 +31,7 @@ class AddToCartView(APIView):
         for item in items:
             product, variation_or_error = self.get_product_and_variation(item)
 
-            # Check if an error response was returned from get_product_and_variation
+
             if not product:
                 return variation_or_error
 
@@ -48,26 +48,26 @@ class AddToCartView(APIView):
             if not quantity or int(quantity) <= 0:
                 return Response({'error': 'Quantity must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Check if the item already exists in the cart
+
             existing_cart_items = CartItem.objects.filter(
                 user=user,
                 product=product,
-                variation=variation_or_error,  # Use variation from get_product_and_variation
+                variation=variation_or_error,  
                 color=color,
                 size=size
             )
 
             if existing_cart_items.exists():
-                # Item already exists, increase the quantity of the first matching item
+
                 cart_item = existing_cart_items.first()
                 cart_item.quantity += int(quantity)
                 cart_item.save()
             else:
-                # Item does not exist, create a new one
+
                 cart_item = CartItem(
                     user=user,
                     product=product,
-                    variation=variation_or_error,  # Use variation here
+                    variation=variation_or_error,  
                     quantity=quantity,
                     color=color,
                     size=size
@@ -76,7 +76,7 @@ class AddToCartView(APIView):
 
             cart_items.append(cart_item)
 
-        # Serialize and return the cart items
+
         serializer = CartItemSerializer(cart_items, many=True)
 
         return Response({
@@ -173,21 +173,51 @@ class DeleteCartItems(APIView):
         return Response({'message': 'All cart items deleted successfully'}, status=204)
     
 
-class AddToWishlistView(APIView):
-    def post(self, request):
-        user = request.user
-        product_id = request.data.get('product_id')
+class WishlistItemAPIView(APIView):
+    def get(self, request, slug=None):
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
 
-        if not product_id:
-            return Response({'error': 'Product ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            wishlist_item = WishlistItem.objects.create(user=user, product_id=product_id)
+        if slug:
+            wishlist_item = get_object_or_404(WishlistItem, slug=slug, session_key=session_key)
             serializer = WishlistItemSerializer(wishlist_item)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            wishlist_items = WishlistItem.objects.filter(session_key=session_key)
+            serializer = WishlistItemSerializer(wishlist_items, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def post(self, request):
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+
+        data = request.data
+        data['session_key'] = session_key
+        serializer = WishlistItemSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, slug):
+        wishlist_item = get_object_or_404(WishlistItem, slug=slug)
+        serializer = WishlistItemSerializer(wishlist_item, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, slug):
+
+        wishlist_item = get_object_or_404(WishlistItem, slug=slug)
+        wishlist_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 
 class AddWishlistToCartView(APIView):
     def post(self, request):

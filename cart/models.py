@@ -1,7 +1,8 @@
+import uuid
 from django.db import models
-from products.models import Color, Product, Size, Variation
+from products.models import Product, Variation
 from users.models import CustomUser
-from rest_framework.validators import ValidationError
+from django.utils.text import slugify
 
 
 
@@ -40,18 +41,18 @@ class CartItem(models.Model):
         super().save(*args, **kwargs)
 
 
-
-
-        
-
-
 class WishlistItem(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)  
-    added_date = models.DateTimeField(auto_now_add=True)  
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_date = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
+    session_key = models.CharField(max_length=32, null=True, blank=True)
 
     class Meta:
-        unique_together = ('user', 'product')
+        unique_together = ('product', 'slug')
 
-    def __str__(self):
-        return f"{self.user.username}'s wishlist: {self.product.name}"
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(f"{self.product.name}-{self.added_date}")
+        super().save(*args, **kwargs)
+
+        
