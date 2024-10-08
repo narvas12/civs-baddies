@@ -30,7 +30,7 @@ from drf_yasg.utils import swagger_auto_schema
 class ProductAPIView(APIView):
     filter_backends = [SearchFilter]
     filterset_class = ProductFilter
-
+    
     def get_permissions(self):
         if self.request.method in ['POST', 'PUT', 'DELETE']:
             self.permission_classes = [IsAuthenticated]
@@ -124,94 +124,6 @@ class ProductAPIView(APIView):
         # Apply filtering logic here based on request parameters
         return queryset
 
-
-# class ProductCreateAPIView(generics.CreateAPIView):
-#     permission_classes = [IsAuthenticated]
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         product = serializer.save()  
-
-       
-#         product_data = self.get_serializer(product).data
-
-#         return Response({
-#             'message': 'Product created successfully',
-#             'product': product_data
-#         }, status=status.HTTP_201_CREATED)
-
-
-    
-
-# class ProductUpdateAPIView(generics.UpdateAPIView):
-#     permission_classes = [IsAuthenticated]
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance, data=request.data, partial=True)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-
-    
-
-# class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-#     permission_classes = [IsAuthenticated]
-
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-
-# class ProductDetailView(generics.RetrieveAPIView):
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-
-#     def get(self, request, *args, **kwargs):
-#         try:
-#             product = self.get_object()
-#             serializer = self.get_serializer(product)
-#             return Response(serializer.data)
-#         except Product.DoesNotExist:
-#             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
-# class ProductListAPIView(generics.ListAPIView):
-    
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-#     filter_backends = [SearchFilter]
-#     filterset_class = ProductFilter
-
-
-
-# class ProductDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-#         serializer = ProductDeleteSerializer(data=request.data)
-#         if serializer.is_valid():
-#             product_ids = serializer.validated_data.get('product_ids', [])
-#             try:
-#                 products_deleted = Product.objects.filter(id__in=product_ids).delete()
-#                 deleted_count = products_deleted[0] if isinstance(products_deleted, tuple) else 0
-#                 return Response(
-#                     {"message": f"{deleted_count} products deleted successfully."},
-#                     status=status.HTTP_204_NO_CONTENT
-#                 )
-#             except Exception as e:
-#                 return Response(
-#                     {"error": "Failed to delete products.", "details": str(e)},
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#                 )
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SuperCategoryCreateAPIView(generics.CreateAPIView):
