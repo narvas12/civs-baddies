@@ -11,7 +11,7 @@ from cart.views import (
     PublicWishlistView,
     RemoveFromCartView,
     UpdateCartItemQuantityView,
-    WishlistItemAPIView,
+    WishlistAPIView,
     WishlistView,
 )
 
@@ -23,7 +23,7 @@ urlpatterns = [
     path('cart-items/<int:pk>/remove/', RemoveFromCartView.as_view()),
     path('cart-items/update-quantity/<int:item_id>/', UpdateCartItemQuantityView.as_view()),
     
-    path('wishlist/', WishlistItemAPIView.as_view(), name='wishlist-list-create'),
-    path('wishlist/<slug:slug>/', WishlistItemAPIView.as_view(), name='wishlist-detail-update-delete'),
+    path('wishlist/', WishlistAPIView.as_view(), name='wishlist-list-create'),
+    path('wishlist/<slug:slug>/', WishlistAPIView.as_view(), name='wishlist-detail-update-delete'),
     
 ]

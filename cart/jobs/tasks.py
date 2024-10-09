@@ -1,6 +1,6 @@
 
 from datetime import datetime, timedelta
-from cart.models import CartItem, WishlistItem
+from cart.models import CartItem, WishList
 from notifications.utils import send_cart_abandonment_email, send_wishlist_abandonment_email
 from django_apscheduler.jobstores import DjangoJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -18,7 +18,7 @@ def mark_abandoned_items_and_send_reminders():
         cart_item.save()
         send_cart_abandonment_email(cart_item.user)
 
-    abandoned_wishlist_items = WishlistItem.objects.filter(added_date__lte=two_weeks_ago)
+    abandoned_wishlist_items = WishList.objects.filter(added_date__lte=two_weeks_ago)
 
     for wishlist_item in abandoned_wishlist_items:
         wishlist_item.delete()

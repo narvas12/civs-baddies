@@ -3,7 +3,7 @@ from django.db import models
 from products.models import Product, Variation
 from users.models import CustomUser
 from django.utils.text import slugify
-
+from django.utils import timezone
 
 
 class CartItem(models.Model):
@@ -41,18 +41,15 @@ class CartItem(models.Model):
         super().save(*args, **kwargs)
 
 
-class WishlistItem(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    added_date = models.DateTimeField(auto_now_add=True)
-    slug = models.SlugField(unique=True, blank=True, null=True)
-    session_key = models.CharField(max_length=32, null=True, blank=True)
 
-    class Meta:
-        unique_together = ('product', 'slug')
+class WishList(models.Model):
+    product = models.ManyToManyField(Product, related_name="wish_list", blank=True)
+    session_key = models.CharField(max_length=32, null=True, blank=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
+    added_date = models.DateTimeField(timezone.now())
+
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(f"{self.product.name}-{self.added_date}")
         super().save(*args, **kwargs)
-
-        

@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from cart.models import CartItem, WishlistItem
+from cart.models import CartItem, WishList
 from products.models import Color, Product, Size, Variation
 from users.models import CustomUser
 from .serializers import CartItemSerializer, WishlistItemSerializer
@@ -173,7 +173,7 @@ class DeleteCartItems(APIView):
         return Response({'message': 'All cart items deleted successfully'}, status=204)
     
 
-class WishlistItemAPIView(APIView):
+class WishlistAPIView(APIView):
     def get(self, request, slug=None):
         session_key = request.session.session_key
         if not session_key:
@@ -182,11 +182,11 @@ class WishlistItemAPIView(APIView):
 
 
         if slug:
-            wishlist_item = get_object_or_404(WishlistItem, slug=slug, session_key=session_key)
+            wishlist_item = get_object_or_404(WishList, slug=slug, session_key=session_key)
             serializer = WishlistItemSerializer(wishlist_item)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            wishlist_items = WishlistItem.objects.filter(session_key=session_key)
+            wishlist_items = WishList.objects.filter(session_key=session_key)
             serializer = WishlistItemSerializer(wishlist_items, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -205,7 +205,7 @@ class WishlistItemAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, slug):
-        wishlist_item = get_object_or_404(WishlistItem, slug=slug)
+        wishlist_item = get_object_or_404(WishList, slug=slug)
         serializer = WishlistItemSerializer(wishlist_item, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -214,7 +214,7 @@ class WishlistItemAPIView(APIView):
 
     def delete(self, request, slug):
 
-        wishlist_item = get_object_or_404(WishlistItem, slug=slug)
+        wishlist_item = get_object_or_404(WishList, slug=slug)
         wishlist_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
@@ -224,7 +224,7 @@ class AddWishlistToCartView(APIView):
         user = request.user
 
         try:
-            wishlist_items = WishlistItem.objects.filter(user=user)
+            wishlist_items = WishList.objects.filter(user=user)
             for wishlist_item in wishlist_items:
                 product = wishlist_item.product
 
@@ -261,7 +261,7 @@ class AddWishlistToCartView(APIView):
 class WishlistView(APIView):
     def get(self, request, customer_id, format=None):
         try:
-            wishlist_items = WishlistItem.objects.filter(user__customer_id=customer_id)
+            wishlist_items = WishList.objects.filter(user__customer_id=customer_id)
             serializer = WishlistItemSerializer(wishlist_items, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -270,6 +270,6 @@ class WishlistView(APIView):
 
 class PublicWishlistView(APIView):
     def get(self, request, unique_identifier):
-        wishlist = get_object_or_404(WishlistItem, unique_identifier=unique_identifier)
+        wishlist = get_object_or_404(WishList, unique_identifier=unique_identifier)
         serializer = WishlistItemSerializer(wishlist)
         return Response(serializer.data)

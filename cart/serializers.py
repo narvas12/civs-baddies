@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from cart.models import CartItem, WishlistItem
+from cart.models import CartItem, WishList
 from products.models import Product, ProductImage
 from products.serializers import ProductSerializer, ProductDetailSerializer
 from django.utils.text import slugify
@@ -52,7 +52,7 @@ class WishlistItemSerializer(serializers.ModelSerializer):
     session_key = serializers.CharField(write_only=True, required=False)
 
     class Meta:
-        model = WishlistItem
+        model = WishList
         fields = ['id','product', 'product_id', 'slug', 'added_date', 'session_key']
 
     def create(self, validated_data):
@@ -64,7 +64,7 @@ class WishlistItemSerializer(serializers.ModelSerializer):
         except Product.DoesNotExist:
             raise serializers.ValidationError("Product does not exist.")
         
-        wishlist_item, created = WishlistItem.objects.get_or_create(
+        wishlist_item, created = WishList.objects.get_or_create(
             product=product,
             session_key=session_key,
             defaults={'slug': self.generate_unique_slug(product)}
