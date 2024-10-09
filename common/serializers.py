@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed, ValidationError, NotFound
 from django.apps import apps
 from django.utils.translation import gettext_lazy as _
-from .models import Rating
+from .models import NewsFlash, Rating
 
 class RatingCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,3 +44,10 @@ class DashboardDataSerializer(serializers.Serializer):
     total_completed_orders = serializers.IntegerField()
     total_pending_orders = serializers.IntegerField()
     total_available_products = serializers.IntegerField()
+
+
+class NewsFlashSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model=NewsFlash
+        fields = "__all__"

@@ -17,5 +17,6 @@ class Rating(models.Model):
     
     
 
-   
+class NewsFlash(models.Model):
+    text = models.CharField(max_length=500)
 

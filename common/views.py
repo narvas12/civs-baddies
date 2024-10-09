@@ -3,11 +3,13 @@ from rest_framework.generics import GenericAPIView
 
 from common.managers import CommonManager
 from .pagination import CustomPagination
-from .serializers import DashboardDataSerializer, RatingCreateSerializer, RatingSerializer
+from .serializers import DashboardDataSerializer, RatingCreateSerializer, RatingSerializer, NewsFlashSerializer
 from .renderers import ApiCustomRenderer
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Rating
+from .models import Rating, NewsFlash
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import AllowAny
 
 
 class RatingCreateView(GenericAPIView):
@@ -50,3 +52,43 @@ class DashboardData(APIView):
         serializer = DashboardDataSerializer(statistics)
 
         return Response(serializer.data)
+
+
+
+class NewsFlashAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, newsflash_id=None):
+        if newsflash_id:
+
+            newsflash = get_object_or_404(NewsFlash, pk=newsflash_id)
+            serializer = NewsFlashSerializer(newsflash)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+
+            newsflashes = NewsFlash.objects.all()
+            serializer = NewsFlashSerializer(newsflashes, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+
+        serializer = NewsFlashSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, newsflash_id):
+
+        newsflash = get_object_or_404(NewsFlash, pk=newsflash_id)
+        serializer = NewsFlashSerializer(newsflash, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, newsflash_id):
+
+        newsflash = get_object_or_404(NewsFlash, pk=newsflash_id)
+        newsflash.delete()
+        return Response({'message': 'NewsFlash deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
