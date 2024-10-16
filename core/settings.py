@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'orders',
     'cart',
     'checkout',
+    'notifications',
     
     #third party
     'allauth',

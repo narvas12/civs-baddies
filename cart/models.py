@@ -45,11 +45,15 @@ class CartItem(models.Model):
 class WishList(models.Model):
     product = models.ManyToManyField(Product, related_name="wish_list", blank=True)
     session_key = models.CharField(max_length=32, null=True, blank=True)
-    slug = models.SlugField(unique=True, blank=True, null=True)
-    added_date = models.DateTimeField(timezone.now())
-
+    slug = models.SlugField(unique=True, max_length=100, blank=True, null=True)  # Increased max_length to 100
+    added_date = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(f"{self.product.name}-{self.added_date}")
+            # Generate a slug with a limit on the length
+            base_slug = slugify(f"wishlist-{self.session_key}-{self.added_date.strftime('%Y%m%d%H%M%S')}")
+            self.slug = base_slug[:95]  # Reserving last 5 characters for uniqueness suffix if needed
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Wishlist for session {self.session_key}"

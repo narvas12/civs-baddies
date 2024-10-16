@@ -175,27 +175,17 @@ class DeleteCartItems(APIView):
 
 class WishlistAPIView(APIView):
     def get(self, request, slug=None):
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.create()
-            session_key = request.session.session_key
-
-
+        session_key = request.session.session_key or request.session.create()
         if slug:
             wishlist_item = get_object_or_404(WishList, slug=slug, session_key=session_key)
             serializer = WishlistItemSerializer(wishlist_item)
-            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             wishlist_items = WishList.objects.filter(session_key=session_key)
             serializer = WishlistItemSerializer(wishlist_items, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.create()
-            session_key = request.session.session_key
-
+        session_key = request.session.session_key or request.session.create()
         data = request.data
         data['session_key'] = session_key
         serializer = WishlistItemSerializer(data=data)
@@ -213,7 +203,6 @@ class WishlistAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, slug):
-
         wishlist_item = get_object_or_404(WishList, slug=slug)
         wishlist_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
