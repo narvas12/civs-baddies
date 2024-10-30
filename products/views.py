@@ -4,7 +4,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
-from products.filters import ProductCategoryFilter, ProductFilter
+from products.filters import ProductFilter
 from .models import CoverPageCarousel, LatestArival, Product, ProductCategory, ProductImage, Variation
 from django_filters.rest_framework import DjangoFilterBackend 
 from rest_framework.views import APIView
@@ -158,7 +158,7 @@ class ProductCategoryListAPIView(generics.ListAPIView):
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]  # Update here
-    filterset_class = ProductCategoryFilter
+    filterset_class = ProductFilter
     search_fields = ['name']
     ordering_fields = ['created_at']
 
