@@ -11,10 +11,18 @@ class ProductFilter(django_filters.FilterSet):
     
     class Meta:
         model = Product
-        fields = ['category', 'name', 'price', 'desc']
+        fields = ['name', 'price', 'desc']
 
     def filter_by_color(self, queryset, name, value):
         return queryset.filter(variations__colors__name__icontains=value)
 
     def filter_by_size(self, queryset, name, value):
         return queryset.filter(variations__colors__sizes__name__icontains=value)
+
+
+class ProductCategoryFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    
+    class Meta:
+        model = ProductCategory
+        fields = ['name', 'super_category']
